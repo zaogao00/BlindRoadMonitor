@@ -2,6 +2,24 @@
 
 本项目所有重要变更记录于此。格式参考 Keep a Changelog。
 
+## [Phase 02] — 2026-08-31
+
+### Checked (只读检查, 未修改环境)
+- Windows 11 家庭版 中文版 (10.0.26200, Build 26200, 64 位)
+- CPU: AMD Ryzen 9 8940HX with Radeon Graphics, 16 核 / 32 线程; 内存约 16 GB (15.2 GiB)
+- GPU: NVIDIA GeForce RTX 5070 Laptop GPU, 8 GB VRAM (8151 MiB); 驱动 591.86 (支持 CUDA 最高 13.1)
+- CUDA Toolkit: 未安装 (符合 Phase 00 约束); 报告中的 "CUDA 13.1" 为驱动能力上限, 非已装 Toolkit
+- Python 3.13.14 (managed); 裸 `pip` 指向 Anaconda, `python -m pip` 才指向 managed 环境 — 已记录错位风险
+- py Launcher 未安装 (`py --list` 不可用); Git 2.55.0.windows.3
+- 磁盘: D:\ 剩余 ~49.6 GB → 状态 NORMAL
+
+### Added
+- `docs/environment.md`: 环境检查报告 (Windows / CPU / 内存 / GPU / 驱动 / CUDA / Python / pip / Git / 磁盘)
+
+### Safety (安全约束落实)
+- 仅检查环境, 未安装 / 卸载 / 升级任何组件
+- 未修改已有 Python 环境, 未安装 CUDA Toolkit / PyTorch, 未升级 NVIDIA 驱动
+
 ## [Phase 00] — 2026-08-31
 
 ### Added (新增)

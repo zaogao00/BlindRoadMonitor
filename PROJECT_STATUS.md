@@ -3,7 +3,7 @@
 ## Phase 00 — 项目安全与磁盘管理初始化
 
 ### 当前状态 (Current Status)
-- **阶段**: Phase 00 已完成 ✅
+- **阶段**: Phase 02 已完成 ✅（Phase 00 亦已完成）
 - **整体状态**: 初始化就绪, 磁盘状态 **NORMAL**, 可安全进入后续 Phase。
 - **硬件**: NVIDIA RTX 5070 (8GB VRAM)
 - **项目根目录**: `D:\BlindRoadMonitor`
@@ -34,6 +34,21 @@
 5. ✅ `PROJECT_STATUS.md` — 本文件
 6. ✅ `.git` 初始化 (commit: `Phase 00: project safety initialization`)
 7. ✅ 落实操作约束: 未安装任何 Python 包 / 未下载数据集 / 未安装 CUDA·PyTorch / 未训练 / 未删除任何用户文件
+
+### Phase 02 — 开发环境检查 (已完成 ✅)
+- **性质**: 纯只读检查, 未安装 / 卸载 / 升级任何组件, 未修改已有 Python 环境。
+- **Windows**: Windows 11 家庭版 中文版 (10.0.26200, Build 26200, 64 位)
+- **CPU**: AMD Ryzen 9 8940HX with Radeon Graphics, 16 核 / 32 线程
+- **内存**: 约 16 GB (15.2 GiB)
+- **GPU (目标)**: NVIDIA GeForce RTX 5070 Laptop GPU, 8 GB VRAM (8151 MiB)
+- **NVIDIA 驱动**: 591.86 (WDDM 32.0.15.9186); 驱动支持 CUDA 最高 **13.1**
+- **CUDA Toolkit**: **未安装** (符合 Phase 00 约束); 详见 `docs/environment.md`
+- **Python**: 3.13.14 (managed, 路径 `C:\Users\ZaogaoLE\.workbuddy\binaries\python\versions\3.13.12\python.exe`)
+- **⚠️ pip 错位**: 裸 `pip` 指向 Anaconda, `python -m pip` 才指向 managed 环境; Phase 01 **必须**用 `python -m pip` 并在独立 venv 中安装
+- **py Launcher**: 未安装 (`py --list` 不可用)
+- **Git**: 2.55.0.windows.3
+- **磁盘**: D:\ 剩余 ~49.6 GB → 状态 **NORMAL**
+- 输出文档: `docs/environment.md`
 
 ### 下一步 (Next Steps)
 - Phase 01 (待用户决定): 环境搭建 — 在隔离 venv 中安装 PyTorch / CUDA (需先再次确认磁盘状态 NORMAL)。
