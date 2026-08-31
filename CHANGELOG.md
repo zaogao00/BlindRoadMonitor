@@ -2,6 +2,32 @@
 
 本项目所有重要变更记录于此。格式参考 Keep a Changelog。
 
+## [Phase 09 完成] — 2026-09-01 (第一轮下载 COMPLETE)
+
+### Done (已完成)
+- 网络出口恢复 (hf.co:443 可达), **ROD-Dataset 第一轮 4,000 图 + 4,000 标签** (225.7 MB) 下载并校验通过:
+  - train **1,000** / valid **1,371** / test **1,629 (全量)** — 均为 seed=20260831 采样 (test 全量)
+  - 落盘: `datasets/raw/rod_dataset/{split}/images|labels/` + `DATASET_INFO.md` + `data.yaml` + `README.md`
+- 校验 `verify_rod_dataset.py`: **0 损坏 / 0 零字节 / 配对完整**; 仅 12 空标签 (train 3 + valid 4 + test 5, 可忽略); `verify_report.json` 已更新
+- 补下载缺失标签: valid `IMG_20867.txt` (39 B)
+
+### Fixed (实施修复 — 环境适配, 不改数据内容)
+- **传输通道**: 原脚本 curl.exe 在本沙箱 schannel 报 `SEC_E_NO_CREDENTIALS` 不可用 → 改为 **requests 直写** (`scripts/download_rod_sample.py`)
+- **标签阈值**: `MIN_BYTES=100` 误判几十字节的标签全部失败 → 区分 图片 100 / 标签 0 (0 字节空标签合法)
+- **HF 限流**: 16 并发触发 429 → 降至 **5 并发 + 429/5xx 指数退避重试 (最多 5 次)**
+- **仓库结构**: train 实际为 `train/{images,labels}/{0,1}/...` → 按 basename 扁平化落盘, 无重名
+
+### License 更正
+- ROD-Dataset 许可按 HF README front-matter 为 **MIT** (首版记录 CC BY 4.0 有误, 已更正于 DATASET_INFO.md / dataset_report.md)
+
+### Safety (安全约束落实)
+- 未训练 / 未转换 / 未删除任何用户文件
+- 下载前 `check_before_operation(required_gb=6.0)` → NORMAL (79.2 GB), 允许; 完成后 D 盘剩余 **~78.9 GB → NORMAL**
+- 数据落入 `datasets/` (已被 `.gitignore` 屏蔽, 不入库)
+
+### Git
+- 提交: `Phase 09: dataset acquisition` (第一轮完成)
+
 ## [Phase 08 复查] — 2026-09-01
 
 ### Searched (重跑调研)

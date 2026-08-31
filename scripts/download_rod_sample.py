@@ -1,19 +1,22 @@
 # -*- coding: utf-8 -*-
 """
-Phase 09 — 安全下载 ROD-Dataset 采样子集 (curl 直写 + 多线程断点续传)
+Phase 09 — 安全下载 ROD-Dataset 采样子集 (requests 直写 + 多线程断点续传)
 只下载 Phase 08 已确认的数据集: Abtinz/Obstacle-Detection-Dataset-YOLO (CC BY 4.0, 原生 YOLO)
-- curl 直写, 避免 huggingface_hub 的 .lock 清理触发沙箱 safe-delete 守卫。
+- requests 直写, 避免 huggingface_hub 的 .lock 清理触发沙箱 safe-delete 守卫。
 - ThreadPoolExecutor 并发下载 (W=16), 大幅缩短耗时, 以便在本轮内完成。
 - 断点续传: 已存在且 >=100 字节的文件跳过。
 - 每 500 张写一次检查点 (download_manifest.json)。
 - 目标: ~4000 张图 (test 全量 1629 + valid 采样 1371 + train 采样 1000) + 配对标签。
 - 不转换、不训练。
+- 传输通道说明: 2026-09-01 实测本沙箱环境 curl/schannel 报 SEC_E_NO_CREDENTIALS
+  (TLS 凭证不可用), 而 Python requests 可正常访问 HF (HTTP 200); 故下载改用 requests 直写。
 """
 import os
 import sys
 import json
 import random
-import subprocess
+import time
+import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 sys.path.insert(0, r"D:\BlindRoadMonitor\scripts")
@@ -28,21 +31,46 @@ SEED = 20260831
 N_TRAIN = 1000
 N_VALID = 1371
 KEEP_TEST_FULL = True
-CURL = r"C:\Windows\system32\curl.exe"
-MIN_BYTES = 100
-WORKERS = 16
+MIN_BYTES = 100          # 图片最小字节阈值 (图片远大于此)
+MIN_BYTES_LBL = 0        # 标签最小字节阈值: 标签仅几十字节, 0 字节空标签也是合法文件
+WORKERS = 5              # 并发线程数 (HF 对高并发限流 429, 实测 16 触发; 5 为安全值)
+TIMEOUT = 120
+MAX_RETRIES = 5          # 429/5xx 指数退避重试次数
 
 
-def run_curl(url, out_path, timeout=60):
+def run_curl(url, out_path, timeout=TIMEOUT, min_bytes=MIN_BYTES):
+    """下载单个文件到 out_path (requests 直写, 失败/过小返回 False)。
+    对 429 (限流) / 5xx 做指数退避重试; 其余错误直接返回 False。"""
     out_path = out_path.replace("/", "\\")
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    cmd = [CURL, "-sSL", "-f", "--retry", "3", "--retry-delay", "1", "-o", out_path, url]
-    r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
-    return r.returncode == 0 and os.path.exists(out_path) and os.path.getsize(out_path) >= MIN_BYTES
+    delay = 2.0
+    for attempt in range(MAX_RETRIES + 1):
+        try:
+            with requests.get(url, timeout=timeout, stream=True) as r:
+                if r.status_code == 429 or r.status_code >= 500:
+                    if attempt < MAX_RETRIES:
+                        time.sleep(delay)
+                        delay *= 2
+                        continue
+                    return False
+                if r.status_code != 200:
+                    return False
+                with open(out_path, "wb") as f:
+                    for chunk in r.iter_content(65536):
+                        if chunk:
+                            f.write(chunk)
+                return os.path.exists(out_path) and os.path.getsize(out_path) >= min_bytes
+        except Exception:
+            if attempt < MAX_RETRIES:
+                time.sleep(delay)
+                delay *= 2
+                continue
+            return False
+    return False
 
 
-def already_ok(out_path):
-    return os.path.exists(out_path) and os.path.getsize(out_path) >= MIN_BYTES
+def already_ok(out_path, min_bytes=MIN_BYTES):
+    return os.path.exists(out_path) and os.path.getsize(out_path) >= min_bytes
 
 
 def save_checkpoint(manifest):
@@ -100,10 +128,10 @@ def main():
         img_out = os.path.join(RAW, s, "images", base)
         lbl_p = img_p.replace("/images/", "/labels/").rsplit(".", 1)[0] + ".txt"
         lbl_out = os.path.join(RAW, s, "labels", base.rsplit(".", 1)[0] + ".txt")
-        if already_ok(img_out) and already_ok(lbl_out):
+        if already_ok(img_out) and already_ok(lbl_out, min_bytes=MIN_BYTES_LBL):
             return (s, True, True, True)  # split, skipped, ok_img, ok_lbl
-        ok_img = run_curl(BASE + img_p, img_out)
-        ok_lbl = run_curl(BASE + lbl_p, lbl_out)
+        ok_img = run_curl(BASE + img_p, img_out, min_bytes=MIN_BYTES)
+        ok_lbl = run_curl(BASE + lbl_p, lbl_out, min_bytes=MIN_BYTES_LBL)
         return (s, False, ok_img, ok_lbl)
 
     done = 0
