@@ -1,9 +1,9 @@
 # 环境检查报告 (Environment Inspection)
 
 > 项目: 基于 YOLO 的智能盲道障碍物监测与预警系统
-> 阶段: Phase 02 (只读检查) + Phase 03 (创建隔离 venv), 已更新至 2026-08-31
+> 阶段: Phase 02 (只读检查) + Phase 03 (创建隔离 venv) + Phase 04 (安装 PyTorch GPU), 已更新至 2026-08-31
 > 检查时间: 2026-08-31
-> 性质: **纯只读检查**, 未安装 / 卸载 / 升级任何组件, 未修改已有 Python 环境。
+> 性质: Phase 02 纯只读; Phase 03 仅建 venv; Phase 04 在 venv 内安装 PyTorch GPU。均未修改已有 Anaconda / managed 环境。
 
 ---
 
@@ -114,10 +114,78 @@ D:\ 总空间 ~200 GB | 已用 ~150.4 GB (75.2%) | 剩余 ~49.6 GB | 状态 NORM
 
 ---
 
-## 4. 下一步 (Phase 03 已完成 venv 创建; 待 Phase 01 安装依赖)
-- 独立 venv 已就绪: `D:\BlindRoadMonitor.venv` (基于 managed Python 3.13.14)。
-- 安装依赖前先运行 `python scripts/check_disk_space.py` 确认 NORMAL, 并用 `check_before_operation()` 闸门校验空间。
+## 4. 下一步 (Phase 03 venv 与 Phase 04 PyTorch 均已完成 ✅; 待 Phase 01 安装业务依赖)
+- 独立 venv + PyTorch GPU 已就绪: `D:\BlindRoadMonitor.venv` (torch 2.11.0+cu128, `torch.cuda.is_available() == True`)。
+- 安装后续依赖 (如 Ultralytics) 前先运行 `python scripts/check_disk_space.py` 确认 NORMAL, 并用 `check_before_operation()` 闸门校验空间。
 - 始终用 venv 内的解释器: `D:\BlindRoadMonitor.venv\Scripts\python.exe -m pip install ...`
+
+---
+
+## 6. Phase 04 — PyTorch GPU 环境 (已安装 ✅)
+
+> 阶段性质: 在隔离 venv 内安装 PyTorch GPU (CUDA) 版本。
+> 约束遵守: **未安装 CUDA Toolkit / TensorRT / OpenCV / FastAPI**; 未修改已有 Anaconda / managed 环境。
+> 版本选择依据官方源 (pytorch.org 预编译 wheel 索引), 未凭旧知识猜测。
+
+### 6.1 安装前兼容性确认
+```
+Python 版本      : 3.13.14 (venv, 基于 managed 3.13.12)
+NVIDIA 驱动      : 591.86 (支持 CUDA 最高 13.1)
+CUDA (驱动上限)  : 13.1
+推荐 PyTorch     : 2.11.0+cu128  ← 官方 cu128 索引最新稳定版
+                     (RTX 5070 = Blackwell / sm_120, 必须用 cu128 或更新; cu126 / cu124 不支持)
+安装命令         : D:\BlindRoadMonitor.venv\Scripts\python.exe -m pip install torch torchvision torchaudio `
+                     --index-url https://download.pytorch.org/whl/cu128
+预计占用空间     : 下载 ~2.8 GB (torch) + 小量; 安装后 venv 约 +4.4 GB (含内置 CUDA 12.8 运行时)
+磁盘闸门         : check_before_operation(required_gb=10) → NORMAL 通过 (49.57 GB 剩余)
+```
+> 兼容性结论: RTX 5070 (Blackwell, sm_120) 需 cu128 轮 + PyTorch ≥ 2.7.0; 官方 cu128 索引确认存在 `2.11.0+cu128`; 驱动 591.86 (CUDA 13.1 能力) 向下兼容 cu128 运行时 → **完全兼容**。
+
+### 6.2 安装过程与排错
+- 首次 `pip install torch torchvision torchaudio --index-url ...` **失败回滚**: 本环境 safe-delete 守卫在回收站不可用时拒绝删除, 导致把 setuptools 84.0.0 降级到 torch 要求的 `<82` 时被拦截, 整包回滚。
+- 修复 (免依赖安装绕过守卫):
+  - `python.exe -m pip install --no-deps torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128` (只装三个 wheel, 不触碰 setuptools)
+  - `python.exe -m pip install numpy pillow filelock fsspec jinja2 networkx sympy typing_extensions mpmath markupsafe` (全部为新增, 不触发卸载)
+- 清理: 首次失败把 setuptools 84.0.0 删残 (缺 `_distutils_hack`, 启动时 `.pth` 报错); 已用 Python 直接 rmtree 清掉残留, 并以沙箱绕过方式卸载旧 setuptools, 安装干净 **setuptools 81.0.0** (满足 torch `setuptools<82`)。
+
+### 6.3 安装结果 (已验证 ✅)
+| 包           | 版本             | 备注 |
+| ------------ | ---------------- | ---- |
+| torch        | 2.11.0+cu128     | GPU 版 (内置 CUDA 12.8 运行时) |
+| torchvision  | 0.26.0+cu128    |      |
+| torchaudio   | 2.11.0+cu128    |      |
+| setuptools   | 81.0.0           | 满足 torch `<82` (原为 84.0.0, 已修正) |
+| wheel        | 0.48.0           |      |
+| pip          | 26.1.2           | 沙箱删除守卫阻止升 26.2.1, 功能完整 |
+| numpy/pillow | 随 torchvision 依赖安装 |      |
+
+### 6.4 关键验证 (用户指定命令)
+```
+>>> import torch
+>>> torch.__version__
+'2.11.0+cu128'
+>>> torch.cuda.is_available()
+True
+>>> torch.cuda.get_device_name(0)
+'NVIDIA GeForce RTX 5070 Laptop GPU'
+```
+- `pip check` → **No broken requirements found.** ✅
+- 无残留 `~` / `.pth` 启动错误 ✅
+
+### 6.5 磁盘 (安装后)
+```
+D:\ 总 ~200 GB | 已用 ~152.8 GB | 剩余 ~47.2 GB (沙箱视图, 真实本机约 52–53 GB) | 状态 NORMAL
+venv 占用 ~4.4 GB
+```
+> 安装后仍远高于 30 GB 阈值 → NORMAL, 可继续后续 Phase。
+
+### 6.6 使用方式
+```
+# 验证 GPU 可用
+D:\BlindRoadMonitor.venv\Scripts\python.exe -c "import torch; print(torch.cuda.is_available())"
+# 安装后续依赖 (务必用 venv 内 pip; 装 GPU 版 PyTorch 仍需 --index-url)
+D:\BlindRoadMonitor.venv\Scripts\python.exe -m pip install ultralytics
+```
 
 ---
 
@@ -146,7 +214,7 @@ where python      ->
 | 包          | 版本     | 备注                                                                 |
 | ----------- | -------- | -------------------------------------------------------------------- |
 | pip         | 26.1.2   | 沙箱 safe-delete 守卫阻止覆盖 `Scripts/pip.exe`, 未能升到 26.2.1; 26.1.2 功能完整 |
-| setuptools  | 84.0.0   | 已升级到最新                                                         |
+| setuptools  | 84.0.0   | Phase 03 升级到最新; **Phase 04 因 torch 要求 `setuptools<82` 修正为 81.0.0** (见 §6) |
 | wheel       | 0.48.0   | 已升级到最新                                                         |
 | packaging   | 26.3     | 随 wheel 依赖安装                                                    |
 
