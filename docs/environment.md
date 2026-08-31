@@ -1,7 +1,7 @@
 # 环境检查报告 (Environment Inspection)
 
 > 项目: 基于 YOLO 的智能盲道障碍物监测与预警系统
-> 阶段: Phase 02 — 检查开发环境 (只读, 不修改环境)
+> 阶段: Phase 02 (只读检查) + Phase 03 (创建隔离 venv), 已更新至 2026-08-31
 > 检查时间: 2026-08-31
 > 性质: **纯只读检查**, 未安装 / 卸载 / 升级任何组件, 未修改已有 Python 环境。
 
@@ -114,6 +114,57 @@ D:\ 总空间 ~200 GB | 已用 ~150.4 GB (75.2%) | 剩余 ~49.6 GB | 状态 NORM
 
 ---
 
-## 4. 下一步 (Phase 01 预告, 待用户确认)
-- 在 `D:\BlindRoadMonitor` 建立独立 venv (建议放 `D:\BlindRoadMonitor\.venv` 或 `backend/venv`), 用 `python -m pip` 安装 PyTorch(CUDA 版) + Ultralytics(YOLO)。
-- 安装前先运行 `python scripts/check_disk_space.py` 确认 NORMAL, 并用 `check_before_operation()` 闸门校验空间。
+## 4. 下一步 (Phase 03 已完成 venv 创建; 待 Phase 01 安装依赖)
+- 独立 venv 已就绪: `D:\BlindRoadMonitor.venv` (基于 managed Python 3.13.14)。
+- 安装依赖前先运行 `python scripts/check_disk_space.py` 确认 NORMAL, 并用 `check_before_operation()` 闸门校验空间。
+- 始终用 venv 内的解释器: `D:\BlindRoadMonitor.venv\Scripts\python.exe -m pip install ...`
+
+---
+
+## 5. Phase 03 — 独立 Python 虚拟环境 (已创建 ✅)
+
+> 阶段性质: **创建隔离环境**, 仅使用 `python -m venv`, 不修改任何已有 Python 环境。
+> 约束遵守: 未安装 PyTorch / Ultralytics / CUDA Toolkit / TensorRT / OpenCV / FastAPI。
+
+### 5.1 创建前检查 (Python 版本 / 路径)
+```
+python --version -> Python 3.13.14
+where python      ->
+  C:\Users\ZaogaoLE\.workbuddy\binaries\python\versions\3.13.12\python.exe   (managed, 实际 3.13.14)  <-- 选用
+  D:\anaconda\python.exe                                                       (Anaconda, 跳过)
+  C:\Users\ZaogaoLE\AppData\Local\Microsoft\WindowsApps\python.exe            (Store 占位, 跳过)
+```
+- **选型依据**: RTX 5070 (Blackwell, sm_120) 需 CUDA 12.8+/13.x 运行时; 当前 PyTorch 2.x 与 Ultralytics 8.x 均官方支持 Python 3.9–3.13, 故 3.13.14 (managed) 为稳定可用版本。本机仅有的 managed 解释器即 3.13.x, 直接采用, **未使用 Anaconda 或其它杂乱环境**。
+
+### 5.2 创建结果
+- venv 路径: `D:\BlindRoadMonitor.venv`
+- 解释器: `D:\BlindRoadMonitor.venv\Scripts\python.exe` (Python 3.13.14)
+- base: `C:\Users\ZaogaoLE\.workbuddy\binaries\python\versions\3.13.12` (managed, 非 Anaconda)
+- 创建命令: `python -m venv D:\BlindRoadMonitor.venv`
+
+### 5.3 升级 (仅限 venv 内)
+| 包          | 版本     | 备注                                                                 |
+| ----------- | -------- | -------------------------------------------------------------------- |
+| pip         | 26.1.2   | 沙箱 safe-delete 守卫阻止覆盖 `Scripts/pip.exe`, 未能升到 26.2.1; 26.1.2 功能完整 |
+| setuptools  | 84.0.0   | 已升级到最新                                                         |
+| wheel       | 0.48.0   | 已升级到最新                                                         |
+| packaging   | 26.3     | 随 wheel 依赖安装                                                    |
+
+> ⚠️ **pip 自升级说明**: 本运行环境的文件删除安全守卫 (`safe-delete`, 回收站不可用时拒绝删除) 会拦截 pip 升级时对旧 `pip.exe` 的覆盖写入, 因此 pip 停留在 26.1.2。这是环境限制而非操作失误; pip 26.1.2 可正常安装 PyTorch / Ultralytics, 无需最新补丁。
+
+### 5.4 环境归属自检脚本
+- `scripts/check_python_env.py` (stdlib-only): 验证「当前 Python 是否来自 `D:\BlindRoadMonitor.venv`」。
+  - 检查项: venv 目录存在 / `sys.prefix` 指向 venv / `sys.executable` 位于 venv 内 / 运行于虚拟环境 (`base≠prefix`) / base 非 Anaconda。
+  - 退出码: `0`=通过, `1`=失败。
+  - 已验证: 用 venv 解释器运行 → ✅ PASS (exit 0); 用 managed 解释器运行 → ❌ FAIL (exit 1)。
+
+### 5.5 如何使用 venv
+```
+# 激活 (PowerShell / CMD)
+D:\BlindRoadMonitor.venv\Scripts\activate
+
+# 或直接显式调用
+D:\BlindRoadMonitor.venv\Scripts\python.exe scripts/check_python_env.py
+D:\BlindRoadMonitor.venv\Scripts\python.exe -m pip install <包>
+```
+

@@ -3,7 +3,7 @@
 ## Phase 00 — 项目安全与磁盘管理初始化
 
 ### 当前状态 (Current Status)
-- **阶段**: Phase 02 已完成 ✅（Phase 00 亦已完成）
+- **阶段**: Phase 03 已完成 ✅（Phase 00 / 02 亦已完成）
 - **整体状态**: 初始化就绪, 磁盘状态 **NORMAL**, 可安全进入后续 Phase。
 - **硬件**: NVIDIA RTX 5070 (8GB VRAM)
 - **项目根目录**: `D:\BlindRoadMonitor`
@@ -49,6 +49,15 @@
 - **Git**: 2.55.0.windows.3
 - **磁盘**: D:\ 剩余 ~49.6 GB → 状态 **NORMAL**
 - 输出文档: `docs/environment.md`
+
+### Phase 03 — 隔离 Python 虚拟环境 (已完成 ✅)
+- **性质**: 创建隔离 venv, 仅 `python -m venv`, 未使用/修改任何已有环境 (Anaconda / managed 均不动)。
+- **venv 路径**: `D:\BlindRoadMonitor.venv`
+- **解释器**: `D:\BlindRoadMonitor.venv\Scripts\python.exe` (Python 3.13.14, base = managed 3.13.12)
+- **升级 (仅 venv 内)**: pip 26.1.2 (沙箱删除守卫阻止升到 26.2.1, 功能完整) / setuptools 84.0.0 / wheel 0.48.0
+- **未安装** (遵守约束): PyTorch / Ultralytics / CUDA Toolkit / TensorRT / OpenCV / FastAPI
+- **新增脚本**: `scripts/check_python_env.py` — 验证当前 Python 来自本项目 venv (venv 内运行 PASS, 其它环境 FAIL)
+- 磁盘状态仍为 **NORMAL** (venv 占用约 12 MB, 可忽略)
 
 ### 下一步 (Next Steps)
 - Phase 01 (待用户决定): 环境搭建 — 在隔离 venv 中安装 PyTorch / CUDA (需先再次确认磁盘状态 NORMAL)。

@@ -2,6 +2,26 @@
 
 本项目所有重要变更记录于此。格式参考 Keep a Changelog。
 
+## [Phase 03] — 2026-08-31
+
+### Added (新增)
+- 隔离 Python 虚拟环境: `D:\BlindRoadMonitor.venv` (基于 managed Python 3.13.14, 未用 Anaconda / 其它杂乱环境)
+- `scripts/check_python_env.py`: 验证当前 Python 是否来自本项目 venv (stdlib-only; venv 内 PASS / 其它 FAIL, 退出码 0/1)
+
+### Upgraded (仅 venv 内)
+- setuptools 84.0.0 (最新)
+- wheel 0.48.0 (最新)
+- pip 26.1.2 (沙箱 safe-delete 守卫拦截对 `Scripts/pip.exe` 的覆盖, 未能升到 26.2.1; 功能完整, 不影响后续安装)
+
+### Not Installed (遵守约束, 未安装)
+- PyTorch / Ultralytics / CUDA Toolkit / TensorRT / OpenCV / FastAPI
+
+### Disk (磁盘状态)
+- 当前状态: **NORMAL** (D 盘剩余 ≥ 30 GB); venv 占用约 12 MB, 可忽略
+
+### Git
+- 提交: `Phase 03: isolated Python environment`
+
 ## [Phase 02] — 2026-08-31
 
 ### Checked (只读检查, 未修改环境)
