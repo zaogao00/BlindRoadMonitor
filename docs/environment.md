@@ -189,6 +189,51 @@ D:\BlindRoadMonitor.venv\Scripts\python.exe -m pip install ultralytics
 
 ---
 
+## 7. Phase 05 — RTX 5070 GPU 验证 (已完成 ✅)
+
+> 阶段性质: 轻量验证 RTX 5070 能否稳定运行 PyTorch。**不训练 / 不下载数据集 / 不占大磁盘**; 遇 CUDA error / OOM / driver error 立即停止 (不擅自改 CUDA / 不卸驱动)。
+> 新增脚本: `scripts/test_gpu.py` (stdlib + torch, 带异常捕获; 检查 CUDA 可用性 / GPU 名 / 显存 / 计算能力 / 矩阵乘 + 正确性校验)。
+
+### 7.1 验证结果 (实跑输出)
+```
+PyTorch version : 2.11.0+cu128
+CUDA runtime    : 12.8
+CUDA available  : True
+Device index    : 0
+GPU name        : NVIDIA GeForce RTX 5070 Laptop GPU
+Compute cap     : sm_120
+Total memory    : 8.55 GB
+Matrix mul      : 4096x4096 @ 4096x4096  (synced) OK
+Correctness diff: 1.53e-05  -> PASS
+Reduction sum   : 16770296.0000
+Allocated mem   : 210.0 MB
+Reserved mem    : 358.6 MB
+empty_cache     : OK
+RESULT: GPU VALIDATION PASSED
+```
+
+### 7.2 记录表
+| 项 | 值 |
+| -- | -- |
+| GPU 型号 | NVIDIA GeForce RTX 5070 Laptop GPU |
+| 显存 | 8.55 GB (8151 MiB 可用, 测试峰值占用 ~210 MB) |
+| 计算能力 | sm_120 (Blackwell 架构) |
+| PyTorch 版本 | 2.11.0+cu128 |
+| CUDA 版本 (运行时) | 12.8 (驱动支持上限 13.1) |
+| 测试结果 | **PASS** (矩阵乘正确, 退出码 0, 无 error/OOM) |
+
+### 7.3 结论
+- RTX 5070 8GB 可稳定运行 PyTorch GPU 计算, 满足 YOLO 训练/推理基础条件。
+- 受 8 GB 显存限制: 训练时需控制 batch size 与输入分辨率, 避免 OOM; 推理可充分利用 sm_120 性能。
+- 全程未触发任何 CUDA error / OOM / driver error, 未修改 CUDA / 驱动。
+
+### 7.4 复跑方式
+```
+D:\BlindRoadMonitor.venv\Scripts\python.exe scripts/test_gpu.py
+```
+
+---
+
 ## 5. Phase 03 — 独立 Python 虚拟环境 (已创建 ✅)
 
 > 阶段性质: **创建隔离环境**, 仅使用 `python -m venv`, 不修改任何已有 Python 环境。

@@ -2,6 +2,23 @@
 
 本项目所有重要变更记录于此。格式参考 Keep a Changelog。
 
+## [Phase 05] — 2026-08-31
+
+### Added (新增)
+- `scripts/test_gpu.py`: RTX 5070 GPU 验证脚本 (stdlib + torch; 带异常捕获, 遇 CUDA error / OOM / driver error 立即退出; 不训练 / 不下载 / 不占大磁盘)
+
+### Verified (验证结果)
+- PyTorch 2.11.0+cu128 ｜ CUDA 运行时 12.8 ｜ `torch.cuda.is_available() == True`
+- GPU: NVIDIA GeForce RTX 5070 Laptop GPU ｜ 计算能力 sm_120 (Blackwell) ｜ 显存 8.55 GB
+- 4096×4096 矩阵乘法 OK; 与 CPU 结果误差 1.53e-05 → PASS; 峰值显存 ~210 MB (<< 8 GB)
+- 退出码 0, 无 CUDA error / OOM / driver error → **GPU 验证通过**
+
+### Disk (磁盘状态)
+- 仅新增脚本 (~5 KB), 未产生大文件; D 盘仍为 **NORMAL**
+
+### Git
+- 提交: `Phase 05: GPU validation`
+
 ## [Phase 04] — 2026-08-31
 
 ### Added (新增)

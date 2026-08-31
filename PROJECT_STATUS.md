@@ -3,7 +3,7 @@
 ## Phase 00 — 项目安全与磁盘管理初始化
 
 ### 当前状态 (Current Status)
-- **阶段**: Phase 04 已完成 ✅（Phase 00 / 02 / 03 亦已完成）
+- **阶段**: Phase 05 已完成 ✅（Phase 00 / 02 / 03 / 04 亦已完成）
 - **整体状态**: 初始化就绪, 磁盘状态 **NORMAL**, 可安全进入后续 Phase。
 - **硬件**: NVIDIA RTX 5070 (8GB VRAM)
 - **项目根目录**: `D:\BlindRoadMonitor`
@@ -70,6 +70,16 @@
 - **关键验证**: `torch.cuda.is_available() == True` ✅; 设备 = **NVIDIA GeForce RTX 5070 Laptop GPU**;`pip check` → No broken requirements found ✅
 - **排错记录**: 首次安装因 safe-delete 守卫拦截 setuptools 降级而回滚; 改用「`--no-deps` 装 torch 全家桶 + 单独装运行依赖」绕过, 再用 Python 直接清理删残的 setuptools 并装干净 81.0.0。
 - **磁盘**: 安装后 venv 占用 ~4.4 GB, D 盘剩余 ~47.2 GB (沙箱视图) / 真实约 52–53 GB → 状态 **NORMAL**。
+
+### Phase 05 — RTX 5070 GPU 验证 (已完成 ✅)
+- **性质**: 轻量验证 RTX 5070 能否稳定运行 PyTorch; **不训练、不下载数据集、不占大磁盘**; 遇 CUDA error / OOM / driver error 立即停止。
+- **新增脚本**: `scripts/test_gpu.py` (stdlib + torch, 带异常捕获; 检查 CUDA 可用性 / GPU 名 / 显存 / 计算能力 / 矩阵乘 + 正确性校验)。
+- **验证结果**:
+  - PyTorch **2.11.0+cu128** ｜ CUDA 运行时 **12.8**
+  - GPU: **NVIDIA GeForce RTX 5070 Laptop GPU** ｜ 计算能力 **sm_120** (Blackwell) ｜ 显存 **8.55 GB**
+  - 4096×4096 矩阵乘法正常; 与 CPU 结果误差 **1.53e-05 → PASS**; 测试峰值显存占用 ~210 MB (远小于 8 GB)
+  - 退出码 **0**, 无 CUDA error / OOM / driver error
+- **结论**: RTX 5070 8GB 可稳定运行 PyTorch GPU 计算, 满足 YOLO 训练/推理基础条件 (受 8GB 显存限制, 训练需控制 batch size / 分辨率)。
 
 ### 下一步 (Next Steps)
 - Phase 01 (待用户决定): 环境搭建 — 在隔离 venv 中安装 PyTorch / CUDA (需先再次确认磁盘状态 NORMAL)。
