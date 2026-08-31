@@ -1,0 +1,28 @@
+# 数据集 / 模型权重 / 运行产物 —— 体积大, 不纳入版本库, 避免撑爆磁盘与仓库
+datasets/
+models/*.pt
+models/*.onnx
+models/*.weights
+runs/
+*.pth
+*.ckpt
+*.onnx
+*.weights
+
+# Python 缓存
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# 虚拟环境 (隔离 venv 不入库)
+venv/
+.env/
+*.egg-info/
+
+# 操作系统 / 编辑器
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# 日志
+*.log
