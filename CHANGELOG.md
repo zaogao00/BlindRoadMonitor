@@ -2,6 +2,30 @@
 
 本项目所有重要变更记录于此。格式参考 Keep a Changelog。
 
+## [Phase 09] — 2026-08-31 (受阻 BLOCKED — 网络出口中断)
+
+### Added (新增)
+- `scripts/download_rod_sample.py`: ROD-Dataset 采样子集下载器 (curl 直写 + 16 线程并发 + 断点续传 + 每 250 张检查点), 目标 ~4000 张 (train 采样 1000 + valid 采样 1371 + test 全量 1629) 及配对 YOLO 标签
+- `scripts/verify_rod_dataset.py`: 数据集完整性校验 (文件/图片/标签数量 + 0 字节/损坏/空标签/配对缺失检查)
+
+### Changed (变更)
+- `docs/dataset_candidates.md` 结论收敛: 本环境无 Kaggle/HF/Baidu 凭证 → WOTR、GuideTWSI 不可直接获取; **ROD-Dataset (CC BY 4.0, 原生 YOLO)** 为唯一可实际拉取的「已确认数据集」, 作为 Phase 09 第一轮下载对象
+
+### Done (已完成)
+- 下载并校验 ROD-Dataset **train 子集 614 图 + 614 标签** (39.3 MB) 至 `datasets/raw/rod_dataset/train/`; `valid/`、`test/` 待网络恢复后续传
+
+### Blocked (受阻 — 环境级)
+- 沙箱出网经本机 Clash 代理 `127.0.0.1:7897`, 当前上游 TLS 握手全部失败 (`SSL: UNEXPECTED_EOF_WHILE_READING`), 所有外部主机 000 不可达; 故 valid/test 未能下载
+- 此前同一会话内已成功下载 614 张, 属**暂时性出口故障**; 网络恢复后重跑脚本即可断点续传
+
+### Safety (安全约束落实)
+- 未训练 / 未转换任何数据
+- 下载前执行 `check_before_operation()` 闸门: 估算 ~0.20 GB, 完成后 D 盘剩余 ≥ 30 GB → 允许 (无需批准)
+- 磁盘状态: **NORMAL**
+
+### Git
+- 提交: `Phase 09: dataset acquisition (BLOCKED — network egress down, partial ROD sample retained)`
+
 ## [Phase 08] — 2026-08-31
 
 ### Added (新增)

@@ -39,6 +39,13 @@
 
 结论: **当前状态 NORMAL**, 远未达到 WARNING(15 GB) / DANGER(15 GB) 阈值, 可安全开展后续 Phase 工作。
 
+### 2.1 Phase 09 更新 (数据集下载 — 受阻 BLOCKED)
+
+- **数据集占用 (本机已落地部分)**: `datasets/raw/rod_dataset/` 下 **614 图 + 614 标签**, 约 **39.3 MB** (train 子集部分样本; valid/test 因网络出口中断未下载)。
+- **磁盘闸门结果**: 估算第一轮全量 (~4000 张) 仅 ~0.20 GB, 完成后 D 盘剩余约 79 GB → **NORMAL, 允许**, 无需等待批准。
+- **受阻**: 沙箱出网经本机 Clash 代理 `127.0.0.1:7897`, 当前上游 TLS 握手失败 (`SSL: UNEXPECTED_EOF_WHILE_READING`), 所有外部主机不可达; 此前同会话已成功下载 614 张, 属暂时性出口故障。网络恢复后重跑 `scripts/download_rod_sample.py` 即可断点续传。
+- 项目目录占用现约 46 MB (含 venv 之外项目文件与部分数据集元数据)。
+
 ---
 
 ## 3. 项目目录结构 (Project Layout)

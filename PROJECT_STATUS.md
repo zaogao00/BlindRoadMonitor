@@ -3,7 +3,7 @@
 ## Phase 00 — 项目安全与磁盘管理初始化
 
 ### 当前状态 (Current Status)
-- **阶段**: Phase 08 已完成 ✅（Phase 00 / 02 / 03 / 04 / 05 / 06 / 07 亦已完成）
+- **阶段**: Phase 00 / 02 / 03 / 04 / 05 / 06 / 07 / 08 已完成 ✅；**Phase 09 受阻 (BLOCKED)** — 沙箱网络出口中断, 仅保留部分 ROD 样本 (614 图 + 614 标签, 39.3 MB)
 - **整体状态**: 初始化就绪, 磁盘状态 **NORMAL**, 可安全进入后续 Phase。
 - **硬件**: NVIDIA RTX 5070 (8GB VRAM)
 - **项目根目录**: `D:\BlindRoadMonitor`
@@ -117,8 +117,19 @@
 - **第一阶段建议图片数**: WOTR 全量 13,928 + GuideTWSI 盲道图 3,000–5,000 ≈ **17,000–19,000 张**; 训练 YOLOv8n/v11n-seg @640px, batch 16–24 (OOM 降至 8–16)。
 - **输出文档**: `docs/dataset_candidates.md`(逐候选记录: 名称/论文/来源/License/图片数/标注类型/盲道/障碍物/Seg/Det/大小/下载方式/YOLO 适合 + 推荐方案)。
 
+### Phase 09 — 数据集安全下载 (受阻 BLOCKED ⛔ — 网络出口中断)
+- **性质**: 调查 + 下载已确认数据集 (ROD-Dataset, CC BY 4.0, 原生 YOLO, 24,326 图+配对标签)。**未训练、未转换。**
+- **进展**:
+  - 已确认本环境无 Kaggle/HF/Baidu 凭证 → WOTR (Baidu/GDrive)、GuideTWSI (HF 401 门控/Kaggle 鉴权) 无法直接获取; 唯一可实际拉取的「已确认数据集」为 **ROD-Dataset** (`Abtinz/Obstacle-Detection-Dataset-YOLO`, HF 公开)。
+  - 已落地**部分样本**: `datasets/raw/rod_dataset/train/` 下 **614 图 + 614 标签** (39.3 MB), 校验通过 (仅 1 个空标签, 可忽略); `valid/`、`test/` 尚未下载。
+  - 已就绪可断点续传脚本: `scripts/download_rod_sample.py` (curl 直写 + 16 线程并发 + 每 250 张检查点), `scripts/verify_rod_dataset.py` (完整性校验)。
+- **受阻原因 (环境级, 非代码/数据集问题)**:
+  - 沙箱出网经本机 Clash 代理 `127.0.0.1:7897`; 当前该代理上游 TLS 握手全部失败 (`SSL: UNEXPECTED_EOF_WHILE_READING`), 所有外部主机 (example/google/pypi/hf/github/kaggle/roboflow) 均 000 不可达。
+  - 此前同一会话内曾成功下载 614 张 (证明链路本身可达), 属**暂时性出口故障**。
+- **磁盘闸门**: 估算下载 ~0.20 GB, 完成后 D 盘剩余 ~79 GB ≥ 30 GB → 允许, 无需等待批准 (待网络恢复后重跑脚本即可)。
+
 ### 下一步 (Next Steps)
-- Phase 09 (待用户决定): 数据集获取与训练准备 — 下载前必须 `check_before_operation()` 闸门校验 (状态需 NORMAL); 标注统一为 YOLO 格式; 数据落入 `datasets/`(已被 .gitignore 屏蔽)。
+- Phase 09 恢复条件: 网络出口恢复 (Clash 代理上游可用) 后, 直接重跑 `scripts/download_rod_sample.py` 即可从 614 张断点续传至 ~4000 张 (train 采样 1000 + valid 采样 1371 + test 全量 1629); 下载前仍会执行 `check_before_operation()` 闸门校验。
 - 任何下载 / 解压 / 训练前, 必须调用 `check_before_operation()` 做闸门校验。
 - 持续监控: 定期运行 `python scripts/check_disk_space.py`, 状态低于 NORMAL 时按策略暂停或停止。
 
