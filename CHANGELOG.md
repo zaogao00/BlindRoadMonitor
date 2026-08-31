@@ -2,6 +2,28 @@
 
 本项目所有重要变更记录于此。格式参考 Keep a Changelog。
 
+## [Phase 08] — 2026-08-31
+
+### Added (新增)
+- `docs/dataset_candidates.md`: 公开盲道/TWSI 数据集候选调研报告 (纯调查, 未下载/未训练/未转换)
+
+### Searched (调研对象)
+- GuideTWSI / Tenji10K / TWSI datasets / tactile paving datasets / blind sidewalk datasets / obstacle detection sidewalk datasets
+- 覆盖: GuideTWSI, WOTR, Tenji10K, SideGuide, TP-Dataset(GRFB-UNet), SToP(合成), Obstacles in Public Spaces(Dist-YOLO), 及补充 ROD-Dataset / Mendeley VI
+
+### Findings (关键结论)
+- **推荐主用**: WOTR (MIT, 13,928 图, 含盲道类+15类障碍物, VOC→YOLO) + GuideTWSI (MIT, 39.5K 图, 官方 YOLOv11-seg 权重与转换器)
+- **障碍物扩充可选**: Obstacles in Public Spaces (CC0, 原生 YOLO) / ROD-Dataset (CC BY 4.0, 原生 YOLO)
+- **不推荐主用**: SideGuide (申请制+数十GB) / Tenji10K (许可不明+双线标注) / TP-Dataset (CC BY-NC-SA 非商业)
+- **预计空间**: 第一阶段约 8–15 GB (NORMAL 下安全); 建议 17,000–19,000 张图起步
+
+### Safety (安全约束落实)
+- 未下载 / 未解压 / 未训练 / 未转换任何数据集
+- 磁盘状态: 采样时 D 盘剩余约 79 GB → **NORMAL**
+
+### Git
+- 提交: `Phase 08: dataset research`
+
 ## [Phase 07] — 2026-08-31
 
 ### Added (新增)

@@ -3,7 +3,7 @@
 ## Phase 00 — 项目安全与磁盘管理初始化
 
 ### 当前状态 (Current Status)
-- **阶段**: Phase 07 已完成 ✅（Phase 00 / 02 / 03 / 04 / 05 / 06 亦已完成）
+- **阶段**: Phase 08 已完成 ✅（Phase 00 / 02 / 03 / 04 / 05 / 06 / 07 亦已完成）
 - **整体状态**: 初始化就绪, 磁盘状态 **NORMAL**, 可安全进入后续 Phase。
 - **硬件**: NVIDIA RTX 5070 (8GB VRAM)
 - **项目根目录**: `D:\BlindRoadMonitor`
@@ -104,8 +104,21 @@
   - 退出码 **0**, 全部 PASS
 - **结论**: YOLO 在 RTX 5070 上模型加载/GPU 推理/结果生成/图片保存全流程正常, 具备进入数据集采集与训练阶段的基础。
 
+### Phase 08 — 公开盲道数据集调研 (已完成 ✅)
+- **性质**: 纯调查研究; **未下载、未解压、未训练、未转换**任何数据集; 磁盘状态仍为 **NORMAL**(采样时 D 盘剩余约 79 GB)。
+- **调研对象**(按用户给定关键词): GuideTWSI / Tenji10K / TWSI datasets / tactile paving datasets / blind sidewalk datasets / obstacle detection sidewalk datasets。
+- **覆盖候选**: GuideTWSI、WOTR、Tenji10K、SideGuide、TP-Dataset(GRFB-UNet)、SToP(合成)、Obstacles in Public Spaces(Dist-YOLO), 及补充 ROD-Dataset / Mendeley VI。
+- **核心结论 — 推荐主用**:
+  - **WOTR (MIT)**: 唯一同时含「盲道类 + 15 类障碍物」且 MIT 授权, 13,928 图, VOC→YOLO 易转, 体量约 2–4 GB, 最贴合「盲道障碍物监测」。
+  - **GuideTWSI (MIT)**: 盲道专精最强, 39.5K 图(条状+圆点/真实+合成), 官方 YOLOv11-seg 权重与格式转换器, RBar-22K 子集约 5–10 GB。
+  - 障碍物扩充可选: Obstacles in Public Spaces (CC0, 原生 YOLO) / ROD-Dataset (CC BY 4.0, 原生 YOLO)。
+- **不推荐主用**: SideGuide(申请制+数十 GB 过大) / Tenji10K(许可不明+双线标注需转换) / TP-Dataset(CC BY-NC-SA 非商业)。
+- **预计空间**: 第一阶段(WOTR 全量 + GuideTWSI RBar-22K 子集 3–5K)约 **8–15 GB**, 在 NORMAL 下安全。
+- **第一阶段建议图片数**: WOTR 全量 13,928 + GuideTWSI 盲道图 3,000–5,000 ≈ **17,000–19,000 张**; 训练 YOLOv8n/v11n-seg @640px, batch 16–24 (OOM 降至 8–16)。
+- **输出文档**: `docs/dataset_candidates.md`(逐候选记录: 名称/论文/来源/License/图片数/标注类型/盲道/障碍物/Seg/Det/大小/下载方式/YOLO 适合 + 推荐方案)。
+
 ### 下一步 (Next Steps)
-- Phase 01 (待用户决定): 环境搭建 — 在隔离 venv 中安装 PyTorch / CUDA (需先再次确认磁盘状态 NORMAL)。
+- Phase 09 (待用户决定): 数据集获取与训练准备 — 下载前必须 `check_before_operation()` 闸门校验 (状态需 NORMAL); 标注统一为 YOLO 格式; 数据落入 `datasets/`(已被 .gitignore 屏蔽)。
 - 任何下载 / 解压 / 训练前, 必须调用 `check_before_operation()` 做闸门校验。
 - 持续监控: 定期运行 `python scripts/check_disk_space.py`, 状态低于 NORMAL 时按策略暂停或停止。
 
