@@ -104,18 +104,20 @@
   - 退出码 **0**, 全部 PASS
 - **结论**: YOLO 在 RTX 5070 上模型加载/GPU 推理/结果生成/图片保存全流程正常, 具备进入数据集采集与训练阶段的基础。
 
-### Phase 08 — 公开盲道数据集调研 (已完成 ✅)
-- **性质**: 纯调查研究; **未下载、未解压、未训练、未转换**任何数据集; 磁盘状态仍为 **NORMAL**(采样时 D 盘剩余约 79 GB)。
+### Phase 08 — 公开盲道数据集调研 (已完成 ✅; 2026-09-01 复查重跑)
+- **性质**: 纯调查研究; **未下载、未解压、未训练、未转换**任何数据集; 磁盘状态仍为 **NORMAL**(实时探测 D 盘剩余 79.2 GB)。
 - **调研对象**(按用户给定关键词): GuideTWSI / Tenji10K / TWSI datasets / tactile paving datasets / blind sidewalk datasets / obstacle detection sidewalk datasets。
-- **覆盖候选**: GuideTWSI、WOTR、Tenji10K、SideGuide、TP-Dataset(GRFB-UNet)、SToP(合成)、Obstacles in Public Spaces(Dist-YOLO), 及补充 ROD-Dataset / Mendeley VI。
-- **核心结论 — 推荐主用**:
+- **覆盖候选(首版 + 复查新增)**: GuideTWSI、WOTR、Tenji10K、SideGuide、TP-Dataset(GRFB-UNet)、SToP(合成)、Obstacles in Public Spaces(Dist-YOLO), 补充 ROD-Dataset / Mendeley VI; 复查新增 **BLV-Road-Nav-Accessibility**(GitHub, 21 视频/90 类)、**TactPav**(ECNU, VLM 多模态)、Roboflow 小集(crosswalk-tactile-blocks / tactile-paving-segmentation)。
+- **复查确认在线**: GuideTWSI 项目主页+论文 PDF / WOTR GitHub+README / GRFB-Unet GitHub / SToP 项目主页 / Tenji10K Wiley / ROD-Dataset HF(含 jiasea 镜像)。
+- **核心结论 — 推荐主用(不变)**:
   - **WOTR (MIT)**: 唯一同时含「盲道类 + 15 类障碍物」且 MIT 授权, 13,928 图, VOC→YOLO 易转, 体量约 2–4 GB, 最贴合「盲道障碍物监测」。
-  - **GuideTWSI (MIT)**: 盲道专精最强, 39.5K 图(条状+圆点/真实+合成), 官方 YOLOv11-seg 权重与格式转换器, RBar-22K 子集约 5–10 GB。
-  - 障碍物扩充可选: Obstacles in Public Spaces (CC0, 原生 YOLO) / ROD-Dataset (CC BY 4.0, 原生 YOLO)。
+  - **GuideTWSI (MIT)**: 盲道专精最强, 39.5K 图(条状+圆点/真实+合成), 官方 YOLOv11-seg 权重与格式转换器, RBar-22K 子集约 5–10 GB; ⚠️ HF/Kaggle 获取可能仍需鉴权。
+  - 障碍物扩充可选: ROD-Dataset (CC BY 4.0, 原生 YOLO, **本环境最可行/已落地 614 张**) / Obstacles in Public Spaces (CC0, 原生 YOLO)。
 - **不推荐主用**: SideGuide(申请制+数十 GB 过大) / Tenji10K(许可不明+双线标注需转换) / TP-Dataset(CC BY-NC-SA 非商业)。
+- **方法参考信号(非数据集)**: 街景图+VLM 盲道障碍物监测(SAGE 2026) / 街景图盲道自动检测(IEEE 2025) / DPSN 盲道+障碍物联合分割。
 - **预计空间**: 第一阶段(WOTR 全量 + GuideTWSI RBar-22K 子集 3–5K)约 **8–15 GB**, 在 NORMAL 下安全。
-- **第一阶段建议图片数**: WOTR 全量 13,928 + GuideTWSI 盲道图 3,000–5,000 ≈ **17,000–19,000 张**; 训练 YOLOv8n/v11n-seg @640px, batch 16–24 (OOM 降至 8–16)。
-- **输出文档**: `docs/dataset_candidates.md`(逐候选记录: 名称/论文/来源/License/图片数/标注类型/盲道/障碍物/Seg/Det/大小/下载方式/YOLO 适合 + 推荐方案)。
+- **第一阶段建议图片数**: WOTR 全量 13,928 + GuideTWSI 盲道图 3,000–5,000 + ROD 已落地 614 ≈ **17,000–19,000 张**; 训练 YOLOv8n/v11n-seg @640px, batch 16–24 (OOM 降至 8–16)。
+- **输出文档**: `docs/dataset_candidates.md`(逐候选记录: 名称/论文/来源/License/图片数/标注类型/盲道/障碍物/Seg/Det/大小/下载方式/YOLO 适合 + 推荐方案 + 复查要点)。
 
 ### Phase 09 — 数据集安全下载 (受阻 BLOCKED ⛔ — 网络出口中断)
 - **性质**: 调查 + 下载已确认数据集 (ROD-Dataset, CC BY 4.0, 原生 YOLO, 24,326 图+配对标签)。**未训练、未转换。**

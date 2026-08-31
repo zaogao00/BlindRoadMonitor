@@ -2,6 +2,41 @@
 
 本项目所有重要变更记录于此。格式参考 Keep a Changelog。
 
+## [Phase 08 复查] — 2026-09-01
+
+### Searched (重跑调研)
+- 按用户给定关键词重跑: GuideTWSI / Tenji10K / TWSI datasets / tactile paving datasets / blind sidewalk datasets / obstacle detection sidewalk datasets
+- 渠道: 官方项目页 / GitHub / 论文 / Hugging Face / Zenodo / Kaggle / Roboflow
+
+### Confirmed (复查确认在线)
+- GuideTWSI 项目主页 + ICRA 2026 论文 PDF (arXiv:2603.07060)
+- WOTR GitHub (`kxzr/WOTR`) + README (Baidu CODE / Google Drive 链接)
+- GRFB-Unet GitHub (`Chon2020/GRFB-Unet`) / SToP 项目主页 (`hchlhwang.github.io/SToP`)
+- Tenji10K Wiley 页面 (DOI 10.1002/tee.24123)
+- ROD-Dataset HF (`Abtinzandi/...`, 含镜像 `jiasea/...`)
+
+### Added (新增候选)
+- **BLV-Road-Nav-Accessibility** (GitHub, 21 视频 / 90 无障碍类, bbox 检测, 需核对类目与许可)
+- **TactPav** (华东师大 ECNU, 视觉-语言多模态盲道导航数据集, Springer 2025)
+- **Roboflow 小集**: crosswalk-tactile-blocks v2 / tactile-paving-segmentation (YOLO 开箱即用, 小规模试用)
+
+### Found (方法参考信号, 非数据集)
+- *Street-level monitoring of urban tactile paving obstructions through VLM + street view* (SAGE 2026)
+- *Automated Detection and Mapping of Tactile Paving Using Street View Images* (IEEE 2025)
+- *DPSN: Tactile paving and Obstacle Joint Segmentation Network* (盲道+障碍物联合分割, 任务对标)
+
+### Conclusion (结论不变)
+- 推荐主用: **WOTR (MIT)** + **GuideTWSI (MIT)**; 障碍物扩充: ROD-Dataset (最可行, 已落地 614 张) / Obstacles in Public Spaces (CC0)
+- 不推荐主用: SideGuide / Tenji10K / TP-Dataset
+- 第一阶段: ~17,000–19,000 张, 约 8–15 GB (NORMAL 下安全)
+
+### Safety (安全约束落实)
+- 未下载 / 未解压 / 未训练 / 未转换任何数据集
+- 磁盘状态: 实时探测 D 盘剩余 **79.2 GB → NORMAL**
+
+### Git
+- 提交: `Phase 08: dataset research` (复查重跑, 更新 `docs/dataset_candidates.md` / `PROJECT_STATUS.md`)
+
 ## [Phase 09] — 2026-08-31 (受阻 BLOCKED — 网络出口中断)
 
 ### Added (新增)
