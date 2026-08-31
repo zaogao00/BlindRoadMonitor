@@ -2,6 +2,21 @@
 
 本项目所有重要变更记录于此。格式参考 Keep a Changelog。
 
+## [Phase 06] — 2026-08-31
+
+### Added (新增)
+- `scripts/check_yolo.py`: YOLO 环境一体化校验脚本 (Python/venv + Ultralytics + PyTorch + CUDA + GPU, 带异常捕获, 全部 PASS 退出码 0)
+- `requirements.txt`: 记录 venv 中**实际安装**的精确版本 (pip freeze 导出), 含 torch/torchvision/torchaudio cu128 与 ultralytics 8.4.135 及其全部依赖
+
+### Changed (变更)
+- 在隔离 venv 安装 `ultralytics==8.4.135` 及基础依赖 (opencv-python 5.0.0.93 / matplotlib 3.11.1 / numpy 2.5.2 / pillow 12.3.0 / pyyaml 6.0.3 / requests 2.34.2 / psutil 7.2.2 / polars / nvidia-ml-py / ultralytics-thop / ultralytics-platform 等)
+- 未安装任何不必要的大型 AI 框架; 未修改已有 Anaconda / managed 环境; 未安装 CUDA Toolkit
+
+### Verified (验证结果)
+- `import ultralytics` → 8.4.135 ✅
+- `yolo checks` → **Setup complete**: Python 3.13.14 / torch 2.11.0+cu128 / CUDA:0 (RTX 5070 Laptop GPU, 8151 MiB) / CUDA 12.8 ✅
+- 磁盘: 安装后 venv 占用 ~5.0 GB, D 盘剩余 **NORMAL**
+
 ## [Phase 05] — 2026-08-31
 
 ### Added (新增)

@@ -3,7 +3,7 @@
 ## Phase 00 — 项目安全与磁盘管理初始化
 
 ### 当前状态 (Current Status)
-- **阶段**: Phase 05 已完成 ✅（Phase 00 / 02 / 03 / 04 亦已完成）
+- **阶段**: Phase 06 已完成 ✅（Phase 00 / 02 / 03 / 04 / 05 亦已完成）
 - **整体状态**: 初始化就绪, 磁盘状态 **NORMAL**, 可安全进入后续 Phase。
 - **硬件**: NVIDIA RTX 5070 (8GB VRAM)
 - **项目根目录**: `D:\BlindRoadMonitor`
@@ -19,7 +19,7 @@
 | 已使用       | ~152.8 GB (76.4%)     | —      |
 | 剩余空间     | ~47.2 GB (沙箱视图; 真实约 52–53 GB) | NORMAL (≥ 30 GB) |
 | 项目目录占用 | 94.42 KB              | 可忽略 |
-| venv 占用    | ~4.4 GB (PyTorch GPU) | 已计入已使用 |
+| venv 占用    | ~5.0 GB (PyTorch GPU + Ultralytics) | 已计入已使用 |
 
 **阈值**: NORMAL ≥ 30 GB ｜ WARNING 15~30 GB ｜ DANGER < 15 GB
 
@@ -80,6 +80,17 @@
   - 4096×4096 矩阵乘法正常; 与 CPU 结果误差 **1.53e-05 → PASS**; 测试峰值显存占用 ~210 MB (远小于 8 GB)
   - 退出码 **0**, 无 CUDA error / OOM / driver error
 - **结论**: RTX 5070 8GB 可稳定运行 PyTorch GPU 计算, 满足 YOLO 训练/推理基础条件 (受 8GB 显存限制, 训练需控制 batch size / 分辨率)。
+
+### Phase 06 — YOLO (Ultralytics) 环境 (已完成 ✅)
+- **性质**: 在隔离 venv 内安装 Ultralytics (YOLO) 及项目真正需要的基础依赖; **未安装**任何不必要的大型 AI 框架 (如 TensorFlow / JAX / MMDetection 等)。
+- **安装命令**: `D:\BlindRoadMonitor.venv\Scripts\python.exe -m pip install ultralytics` (PyTorch 已由 Phase 04 预装, 仅新增 YOLO 依赖)
+- **关键结果**:
+  - `import ultralytics` ✅ 版本 **8.4.135**
+  - `yolo checks` ✅ **Setup complete** — Python 3.13.14 / torch 2.11.0+cu128 / CUDA:0 (RTX 5070 Laptop GPU, 8151 MiB) / CUDA 12.8
+  - 依赖齐备: opencv-python 5.0.0.93 / matplotlib 3.11.1 / numpy 2.5.2 / pillow 12.3.0 / pyyaml 6.0.3 / requests 2.34.2 / torchvision 0.26.0+cu128 / psutil 7.2.2 / polars 1.44.1 / nvidia-ml-py 13.610.43 / ultralytics-thop 2.1.6 / ultralytics-platform 0.1.20
+- **新增脚本**: `scripts/check_yolo.py` — 一体化校验 Python(venv) / Ultralytics / PyTorch / CUDA / GPU, 带异常捕获, 全部 PASS 退出码 0。
+- **新增文件**: `requirements.txt` — 记录 venv 中**实际安装**的精确版本 (pip freeze 导出), 便于复现。
+- **磁盘**: 安装后 venv 占用 ~5.0 GB, D 盘剩余 **NORMAL** (沙箱视图约 79.5 GB / 真实约 52–53 GB)。
 
 ### 下一步 (Next Steps)
 - Phase 01 (待用户决定): 环境搭建 — 在隔离 venv 中安装 PyTorch / CUDA (需先再次确认磁盘状态 NORMAL)。
