@@ -2,6 +2,22 @@
 
 本项目所有重要变更记录于此。格式参考 Keep a Changelog。
 
+## [Phase 07] — 2026-08-31
+
+### Added (新增)
+- `tests/test_yolo_inference.py`: YOLO 基础推理验证脚本 (加载 yolov8n → GPU 推理 → 保存结果图; 收集模型大小/推理时间/GPU 显存/检测框数/输出图片; 带异常捕获)
+
+### Changed (变更)
+- 将预训练权重 `yolov8n.pt` (6.25 MB) 规范存放至 `models/` 目录 (已被 `.gitignore` 屏蔽, 不入库); 测试脚本优先复用该缓存权重, 避免重复下载
+- 未下载任何大型数据集; 未进行训练
+
+### Verified (验证结果)
+- 模型加载: yolov8n.pt 6.25 MB ✅
+- GPU 推理: cuda:0 (RTX 5070), 耗时 1.447 s (复用权重, 无下载) ✅
+- GPU 显存: 推理后 23.2 MB / 峰值 28.0 MB (远低于 8GB) ✅
+- 检测框: 6 个; 输出图片: `runs/yolo_inference_test/bus.jpg` 已保存 ✅
+- 退出码 0, 全流程 PASS
+
 ## [Phase 06] — 2026-08-31
 
 ### Added (新增)

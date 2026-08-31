@@ -3,7 +3,7 @@
 ## Phase 00 — 项目安全与磁盘管理初始化
 
 ### 当前状态 (Current Status)
-- **阶段**: Phase 06 已完成 ✅（Phase 00 / 02 / 03 / 04 / 05 亦已完成）
+- **阶段**: Phase 07 已完成 ✅（Phase 00 / 02 / 03 / 04 / 05 / 06 亦已完成）
 - **整体状态**: 初始化就绪, 磁盘状态 **NORMAL**, 可安全进入后续 Phase。
 - **硬件**: NVIDIA RTX 5070 (8GB VRAM)
 - **项目根目录**: `D:\BlindRoadMonitor`
@@ -91,6 +91,18 @@
 - **新增脚本**: `scripts/check_yolo.py` — 一体化校验 Python(venv) / Ultralytics / PyTorch / CUDA / GPU, 带异常捕获, 全部 PASS 退出码 0。
 - **新增文件**: `requirements.txt` — 记录 venv 中**实际安装**的精确版本 (pip freeze 导出), 便于复现。
 - **磁盘**: 安装后 venv 占用 ~5.0 GB, D 盘剩余 **NORMAL** (沙箱视图约 79.5 GB / 真实约 52–53 GB)。
+
+### Phase 07 — YOLO 基础推理验证 (已完成 ✅)
+- **性质**: 无正式数据集情况下, 用 Ultralytics 自带示例图 (bus.jpg) + 自动下载的 yolov8n 预训练权重跑通一次 GPU 推理; **不下载大型数据集、不训练**。
+- **新增脚本**: `tests/test_yolo_inference.py` — 加载模型 → GPU(device=0)推理 → 保存结果图, 收集模型大小/推理时间/GPU 显存/检测框数/输出图片, 带异常捕获 (OOM/CUDA error 立即停止)。
+- **关键结果**:
+  - 模型: `yolov8n.pt` **6.25 MB** (已缓存至 `models/`, 被 `.gitignore` 屏蔽, 不入库)
+  - 测试图: `ultralytics/assets/bus.jpg` (官方自带示例, 约 100KB)
+  - GPU 推理: cuda:0 (RTX 5070), 耗时 **1.447 s** (二次运行, 无下载)
+  - GPU 显存: 推理后 23.2 MB / 峰值 28.0 MB (远低于 8GB)
+  - 检测框: **6 个**; 输出图: `runs/yolo_inference_test/bus.jpg` (已保存 ✅)
+  - 退出码 **0**, 全部 PASS
+- **结论**: YOLO 在 RTX 5070 上模型加载/GPU 推理/结果生成/图片保存全流程正常, 具备进入数据集采集与训练阶段的基础。
 
 ### 下一步 (Next Steps)
 - Phase 01 (待用户决定): 环境搭建 — 在隔离 venv 中安装 PyTorch / CUDA (需先再次确认磁盘状态 NORMAL)。
