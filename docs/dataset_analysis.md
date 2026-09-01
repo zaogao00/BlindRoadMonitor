@@ -14,7 +14,7 @@
 | **是否适合 YOLO** | ✅ **适合**，但**必须转换后**才能训练。两数据集都能映射到 YOLO detect 格式；盲道类存在且可用。 |
 | **需要什么转换** | WOTR: **VOC XML → YOLO txt**（按 stem 配对，勿用 `<filename>`）；ROD: **多边形 → 检测框**（第一阶段）+ 类 ID 重映射；两者统一 `data.yaml`、去重、统一划分。 |
 | **保留类别** | 统一为 **26 类**（见 §6），含核心类 `blind_road`。 |
-| **合并类别** | 11 组跨数据集同义类合并（person/Person、pole/Electrical Pole、bicycle/Bike 等），见 §6.2。 |
+| **合并类别** | 15 组跨数据集同义类合并（person/Person、pole/Electrical Pole、bicycle/Bike 等），见 §6.2。 |
 | **丢弃类别** | **2 类**：`Building`（背景建筑）、`Road`（路面背景，与 blind_road 语义冲突）。 |
 | **最大风险** | ① 盲道类仅 2,381 实例（占总量 1.21%），样本偏少；② 划分泄漏 17 组重复图；③ 类别长尾 32:1。 |
 
@@ -163,10 +163,10 @@
 
 > `electrical_box`（ROD, 71）建议**并入 `pole`**（同为杆状/箱体电力设施，视觉相近），上表已按此处理；若坚持独立则最终为 27 类。
 
-### 6.2 合并清单（11 组跨数据集同义类）
+### 6.2 合并清单（15 组跨数据集同义类）
 
 person↔Person ｜ pole↔Electrical Pole ｜ car↔Car ｜ tree↔Tree ｜ motorcycle↔Motorcycle ｜ crosswalk↔Pedestrian crosswalk ｜ bicycle↔Bike（+Bicycle Rack）｜ roadblock↔Teraffic Barrel ｜ reflective_cone↔Traffic Cone ｜ truck↔Truck ｜ sign↔Traffic sign ｜ ashcan↔Dustbin ｜ bus↔Bus ｜ fire_hydrant↔Fire hydrant ｜ dog↔Dog
-（共 15 组映射，最终压并为 11 个合并类）
+（共 15 组映射，对应 §6.1 中 15 个「合并」判定类）
 
 ### 6.3 丢弃清单（2 类）
 
@@ -205,7 +205,7 @@ person↔Person ｜ pole↔Electrical Pole ｜ car↔Car ｜ tree↔Tree ｜ mot
 
 | 数据集 | 重复组 | 冗余文件 | 跨划分情况 |
 |---|---|---|---|
-| WOTR | **11 组** | 11 张 | 已确认样本中 **5+ 组跨 split**（train↔test ×3、train↔val ×2、test↔val ×1） |
+| WOTR | **11 组** | 11 张 | 全量核对 **7 组跨 split**（train↔test ×3、train↔val ×2、test↔val ×2） |
 | ROD | **9 组** | 9 张 | **8 组跨 split**（train↔test ×2、train↔valid ×2、valid↔test ×4），1 组 valid 内部 |
 
 - **风险**：同一张图同时出现在 train 与 test → 评估指标虚高（ memorize 而非泛化）。
