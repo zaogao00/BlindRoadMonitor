@@ -1,7 +1,46 @@
 # 数据集获取报告 (docs/dataset_report.md) — Phase 09
 
 > 生成日期: 2026-09-01（首版 2026-08-31 受阻, 本版为**恢复后完成**）
-> 阶段状态: **已完成 (COMPLETE)** — 网络出口恢复, 第一轮 4,000 张下载并校验通过
+> 阶段状态: **已完成 (COMPLETE)** — 网络出口恢复, ROD-Dataset 第一轮 4,000 张 + **WOTR 全量 13,928 张**下载并校验通过
+
+## 0. 补充下载：WOTR（2026-09-01，盲道+障碍物主训练集）
+
+> 背景: 用户要求补充盲道数据（ROD 无盲道类）；Roboflow 需登录不可用、GuideTWSI HF 仍 401 门控。
+> 发现 **WOTR 的 Google Drive share link 在本机网络零凭证可达** → 直接下载全量。
+
+### 0.1 磁盘闸门（下载前）
+
+| 项 | 数值 |
+|---|---|
+| 当前 D 盘剩余 | **73.2 GB (NORMAL)** |
+| WOTR.zip | 4,244,840,539 B ≈ **3.95 GiB**（Drive 实测） |
+| 解压预计 | ~4.19 GB（实测，13,928 图 VOC） |
+| 临时空间 | zip 保留 + 解压 ≈ 8.1 GB |
+| **完成后剩余** | **~65 GB ≥ 30 GB → 允许, 无需批准** |
+
+闸门实况: `check_before_operation('download_dataset_wotr', required_gb=12.0)` → **ok=True, NORMAL**。
+
+### 0.2 实际结果（全量 ✅）
+
+| 项 | 数值 |
+|---|---|
+| 下载 | `datasets/raw/wotr/WOTR.zip` 3.95 GiB，大小与 Drive 完全匹配，`testzip()` 通过 |
+| 解压 | `datasets/raw/wotr/WOTR/`：JPEGImages **13,928** + Annotations **13,928**（配对完整） |
+| 划分 | train **9,056** / val **2,338** / test **2,534**（ImageSets/Main） |
+| 类别 | 20 类, 含 **`tactile_paving→blind_road`（盲道）** + 15 类障碍物（抽查确认 blind_road 存在） |
+| License | **MIT**（可商用） |
+| 占用 | zip 3.95 GiB + 解压 4.19 GB ≈ 8.1 GB |
+
+### 0.3 实现方式
+
+- 新增 `scripts/download_wotr.py`: gdown 流程（病毒扫描确认页 → `drive.usercontent.google.com` GET）+ **Range 断点续传**（实测 206 支持）+ 磁盘闸门 + zip 完整性校验。
+- 下载速度 ~3.1 MB/s，全程 ~20 分钟；未触发限流（Drive 与 HF 不同, 无 429）。
+
+### 0.4 约束落实
+
+- ✅ 未训练、未转换、未删除任何用户文件；数据落入 `datasets/`（`.gitignore` 屏蔽, 不入库）。
+- ✅ 下载/解压前均执行 `check_before_operation()` 闸门, 状态 NORMAL。
+
 
 ## 1. 目标与范围
 

@@ -41,12 +41,13 @@
 
 ### 2.1 Phase 09 更新 (数据集下载 — 第一轮完成 ✅, 2026-09-01)
 
-- **数据集占用 (本机已落地)**: `datasets/raw/rod_dataset/` 下 **4,000 图 + 4,000 标签**, 约 **225.7 MB**（train 1,000 / valid 1,371 / test 1,629 全量）。
-- **磁盘闸门结果**: 下载前实时剩余 **79.2 GB (NORMAL)**；估算下载 ~0.20–0.25 GB、解压 0、转换 0、临时 ~0 → 完成后剩余 ~78.9 GB ≥ 30 GB → **允许, 无需等待批准**（`check_before_operation(required_gb=6.0)` → ok=True）。
-- **网络恢复**: 2026-08-31 曾因沙箱出网中断 (Clash 代理 TLS 握手失败) 受阻；2026-09-01 实测网络恢复 (hf.co:443 可达), 断点续传从 614 张完成至 4,000 张。
-- **校验**: `verify_rod_dataset.py` → **0 损坏 / 0 零字节 / 配对完整**, 仅 12 空标签 (可忽略)。
-- **实施修复**: curl→requests 通道 (schannel 不可用)、标签字节阈值 (100→0)、并发 16→5 + 429 退避重试。
-- 项目目录占用现约 75 MB (含部分数据集元数据; 数据集本体 225.7 MB 另计, 均已被 `.gitignore` 屏蔽)。
+- **ROD-Dataset (本机已落地)**: `datasets/raw/rod_dataset/` 下 **4,000 图 + 4,000 标签**, 约 **225.7 MB**（train 1,000 / valid 1,371 / test 1,629 全量）。
+- **WOTR (本机已落地, 补充)**: `datasets/raw/wotr/` 下 **WOTR.zip 3.95 GiB + 解压 4.19 GB**（13,928 图 + 13,928 VOC XML, train 9,056 / val 2,338 / test 2,534）— 经 Google Drive 公开链接零凭证获取, 含盲道类 `tactile_paving→blind_road`。
+- **磁盘闸门结果 (两次均通过)**: ROD 下载前剩余 79.2 GB → 完成后 ~78.9 GB；WOTR 下载/解压前剩余 73.2 GB → 完成后 ~65 GB。均 **NORMAL, 允许**, 无需等待批准。
+- **网络恢复**: 2026-08-31 曾因沙箱出网中断受阻；2026-09-01 实测恢复 (hf.co:443 与 drive.google.com 均可达)。
+- **校验**: ROD `verify_rod_dataset.py` → 0 损坏/0 零字节/配对完整; WOTR zip `testzip()` 通过 + 13,928 配对核对 ✅。
+- **实施修复**: curl→requests 通道、标签字节阈值 (100→0)、HF 并发 16→5 + 429 退避；新增 `scripts/download_wotr.py` (gdown + Range 续传)。
+- 项目目录占用现约 340 MB（含数据集元数据；ROD 225.7 MB + WOTR 8.1 GB 本体另计, 均已被 `.gitignore` 屏蔽）。
 
 ---
 

@@ -2,6 +2,31 @@
 
 本项目所有重要变更记录于此。格式参考 Keep a Changelog。
 
+## [Phase 09 补充] — 2026-09-01 (WOTR 全量下载 COMPLETE)
+
+### Added (新增)
+- **WOTR 全量** (VOC, MIT, 含盲道类): 13,928 图 + 13,928 XML (train 9,056 / val 2,338 / test 2,534)
+  - 经 **Google Drive 公开链接零凭证**获取 (gdown 流程 + Range 断点续传)
+  - 落盘: `datasets/raw/wotr/` (WOTR.zip 3.95 GiB + 解压 4.19 GB + `DATASET_INFO.md`)
+- **`scripts/download_wotr.py`**: WOTR 下载脚本 (磁盘闸门 + 病毒扫描确认页处理 + usercontent GET + Range 续传 + zip testzip 校验)
+
+### Verified (验证结果)
+- WOTR.zip 4,244,840,539 B 与 Drive 大小完全匹配; `testzip()` → 无损坏
+- JPEGImages 13,928 / Annotations 13,928 配对完整; ImageSets 划分合计 13,928 ✅
+- 抽查 2,000 XML: 含 `blind_road`(盲道) 23 个目标 / 17 张图; 另有 person/car/pole/truck 等 20 类
+
+### Changed (变更)
+- 盲道数据策略: Roboflow 403 (需登录)、GuideTWSI HF 401 (门控) 均不可用 → 改用 **WOTR** (唯一零凭证可获取的「盲道+障碍物」MIT 数据集), 解决盲道数据缺口
+- `docs/dataset_report.md` 新增 §0 (WOTR 补充); `docs/storage_report.md` §2.1、`PROJECT_STATUS.md` Phase 09/下一步/磁盘表 同步更新
+
+### Safety (安全约束落实)
+- 未训练 / 未转换 / 未删除任何用户文件
+- 下载与解压前均 `check_before_operation()` → NORMAL (73.2 GB), 允许; 完成后 D 盘剩余 **~65 GB → NORMAL**
+- 数据落入 `datasets/` (`.gitignore` 屏蔽, 不入库)
+
+### Git
+- 提交: `Phase 09: add WOTR dataset (blind road + obstacles)`
+
 ## [Phase 09 完成] — 2026-09-01 (第一轮下载 COMPLETE)
 
 ### Done (已完成)

@@ -3,7 +3,7 @@
 ## Phase 00 — 项目安全与磁盘管理初始化
 
 ### 当前状态 (Current Status)
-- **阶段**: Phase 00 / 02 / 03 / 04 / 05 / 06 / 07 / 08 已完成 ✅；**Phase 09 已完成 ✅** — 第一轮下载 4,000 图 + 4,000 标签 (ROD-Dataset, 225.7 MB), 校验通过
+- **阶段**: Phase 00 / 02 / 03 / 04 / 05 / 06 / 07 / 08 已完成 ✅；**Phase 09 已完成 ✅** — ROD-Dataset 第一轮 4,000 图 + 4,000 标签 (225.7 MB) 及 **WOTR 全量 13,928 图 + 13,928 VOC 标注 (8.1 GB)** 下载并校验通过
 - **整体状态**: 初始化就绪, 磁盘状态 **NORMAL**, 可安全进入后续 Phase。
 - **硬件**: NVIDIA RTX 5070 (8GB VRAM)
 - **项目根目录**: `D:\BlindRoadMonitor`
@@ -15,11 +15,12 @@
 | ------------ | --------------------- | ------ |
 | 监控盘符     | D:\                   | —      |
 | 总空间       | ~200 GB (沙箱视图)    | —      |
-| 已使用       | ~120.8 GB (60.4%)     | —      |
-| 剩余空间     | **~78.9 GB** (Phase 09 完成后) | NORMAL (≥ 30 GB) |
-| 项目目录占用 | ~75 MB (含数据集元数据) | 可忽略 |
+| 已使用       | ~135 GB (67.5%)       | —      |
+| 剩余空间     | **~65 GB** (WOTR 下载+解压后) | NORMAL (≥ 30 GB) |
+| 项目目录占用 | ~340 MB (含数据集元数据) | 可忽略 |
 | venv 占用    | ~4.7 GB (PyTorch GPU + Ultralytics) | 已计入已使用 |
 | ROD 数据集   | 225.7 MB (4,000 图 + 4,000 标签) | 已计入已使用 |
+| WOTR 数据集  | 8.1 GB (zip 3.95 GiB + 解压 4.19 GB; 13,928 图 + VOC) | 已计入已使用 |
 
 **阈值**: NORMAL ≥ 30 GB ｜ WARNING 15~30 GB ｜ DANGER < 15 GB
 
@@ -119,23 +120,19 @@
 - **第一阶段建议图片数**: WOTR 全量 13,928 + GuideTWSI 盲道图 3,000–5,000 + ROD 已落地 614 ≈ **17,000–19,000 张**; 训练 YOLOv8n/v11n-seg @640px, batch 16–24 (OOM 降至 8–16)。
 - **输出文档**: `docs/dataset_candidates.md`(逐候选记录: 名称/论文/来源/License/图片数/标注类型/盲道/障碍物/Seg/Det/大小/下载方式/YOLO 适合 + 推荐方案 + 复查要点)。
 
-### Phase 09 — 数据集安全下载 (已完成 ✅; 2026-09-01 第一轮完成)
-- **性质**: 下载已确认数据集 (ROD-Dataset, 原生 YOLO, 24,326 图全集, HF README 标注 **MIT**)。**未训练、未转换。**
-- **结果**:
-  - 网络出口 2026-09-01 恢复 (hf.co:443 可达), 从首轮受阻时的 614 张**断点续传至 4,000 张**:
-    **train 1,000 / valid 1,371 / test 1,629 (全量) = 4,000 图 + 4,000 标签, 225.7 MB**。
-  - 校验 `verify_rod_dataset.py`: **0 损坏 / 0 零字节 / 配对完整**; 仅 12 空标签 (train 3 + valid 4 + test 5, 可忽略)。
-  - 落盘: `datasets/raw/rod_dataset/{split}/images|labels/` + `DATASET_INFO.md` + `data.yaml` + `README.md` + `download_manifest.json` + `verify_report.json`。
+### Phase 09 — 数据集安全下载 (已完成 ✅; 2026-09-01)
+- **性质**: 下载已确认数据集, **未训练、未转换**。本轮完成两个数据集:
+  - **ROD-Dataset** (原生 YOLO, 24,326 图全集, HF README 标注 **MIT**): 网络恢复后从 614 张**断点续传至 4,000 张** (train 1,000 / valid 1,371 / test 1,629 全量 = 4,000 图 + 4,000 标签, 225.7 MB); 校验 0 损坏 / 0 零字节 / 配对完整 (12 空标签可忽略)。
+  - **WOTR** (VOC 格式, **MIT**, 含盲道类): 用户要求补盲道数据 → Roboflow 403/GuideTWSI 401 不可用 → 实测 **Google Drive 公开链接零凭证可达**, 全量下载 **13,928 图 + 13,928 VOC XML** (train 9,056 / val 2,338 / test 2,534), zip 3.95 GiB + 解压 4.19 GB; `testzip()` 通过, 配对完整, 抽查确认盲道类 `tactile_paving→blind_road` 存在。
 - **实施修复 (环境适配, 不改数据)**:
-  - 传输通道: curl/schannel 本沙箱不可用 (`SEC_E_NO_CREDENTIALS`) → 改用 **requests 直写**;
-  - 标签字节阈值: 100 → 0 (标签仅几十字节, 原阈值误判全部标签失败);
-  - HF 限流: 16 并发触发 429 → 降至 **5 并发 + 429/5xx 指数退避重试**;
-  - 仓库 train 实际子目录 `{0,1}/` → 按 basename 扁平化落盘, 无重名。
-- **磁盘闸门**: 下载前剩余 79.2 GB (NORMAL), 估算 ~0.20–0.25 GB; `check_before_operation(required_gb=6.0)` → **允许**; 完成后剩余 ~78.9 GB ≥ 30 GB。
-- **附随文档**: `docs/dataset_report.md` (完整报告), `docs/storage_report.md` (§2.1 更新), `datasets/raw/rod_dataset/DATASET_INFO.md`。
+  - ROD: curl/schannel 不可用 → requests 直写; 标签阈值 100→0; HF 限流 16→5 并发 + 429 退避;
+  - WOTR: 新增 `scripts/download_wotr.py` (gdown 流程 + **Range 断点续传** + 磁盘闸门 + zip 校验)。
+- **磁盘闸门 (均通过)**: ROD 前剩余 79.2 GB; WOTR 下载/解压前 73.2 GB; 完成后 ~65 GB ≥ 30 GB → 均 NORMAL 允许。
+- **落盘**: `datasets/raw/rod_dataset/` + `datasets/raw/wotr/` (各含 `DATASET_INFO.md`; 均被 `.gitignore` 屏蔽)。
+- **附随文档**: `docs/dataset_report.md` (§0 WOTR 补充), `docs/storage_report.md` (§2.1 更新)。
 
 ### 下一步 (Next Steps)
-- **数据准备 (Phase 10 候选)**: 将 ROD-Dataset 与后续获取的盲道数据集 (WOTR/GuideTWSI, 需另解决获取凭证) 做类别体系合并/映射; 本项目主目标是「盲道 + 障碍物」, ROD 无盲道类, 作**障碍物扩充**。
+- **数据准备 (Phase 10 候选)**: 将 WOTR (VOC, 含盲道类) + ROD-Dataset (YOLO, 障碍物扩充) 做类别体系合并与格式统一 (VOC XML → YOLO txt); 本项目主目标「盲道 + 障碍物」, **WOTR 提供盲道类 (tactile_paving→blind_road), ROD 扩充街具障碍物类**; GuideTWSI 仍 401 门控, 可选后续获取。
 - 任何下载 / 解压 / 训练前, 必须调用 `check_before_operation()` 做闸门校验。
 - 持续监控: 定期运行 `python scripts/check_disk_space.py`, 状态低于 NORMAL 时按策略暂停或停止。
 
