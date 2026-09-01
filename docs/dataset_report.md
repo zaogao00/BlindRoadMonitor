@@ -27,9 +27,11 @@
 | 下载 | `datasets/raw/wotr/WOTR.zip` 3.95 GiB，大小与 Drive 完全匹配，`testzip()` 通过 |
 | 解压 | `datasets/raw/wotr/WOTR/`：JPEGImages **13,928** + Annotations **13,928**（配对完整） |
 | 划分 | train **9,056** / val **2,338** / test **2,534**（ImageSets/Main） |
-| 类别 | 20 类, 含 **`tactile_paving→blind_road`（盲道）** + 15 类障碍物（抽查确认 blind_road 存在） |
+| 类别 | 20 类, 含 **`tactile_paving→blind_road`（盲道）**；全量盲道 **1,723 图 / 2,381 实例**（object/name 无 TW，TW 为 owner 姓名） |
 | License | **MIT**（可商用） |
-| 占用 | zip 3.95 GiB + 解压 4.19 GB ≈ 8.1 GB |
+| 占用 | 解压 4.19 GB（WOTR.zip 已删除回收 3.95 GiB；可经 `scripts/download_wotr.py` 随时重下） |
+
+> ⚠️ 转换陷阱（已验证）：13,926/13,928 个 XML 的 `<filename>` 与磁盘图片名不一致，必须按 **XML stem ↔ 图片 stem** 配对（100% 完整）。详见 `datasets/raw/wotr/DATASET_INFO.md` §5。
 
 ### 0.3 实现方式
 

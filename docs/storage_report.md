@@ -42,7 +42,7 @@
 ### 2.1 Phase 09 更新 (数据集下载 — 第一轮完成 ✅, 2026-09-01)
 
 - **ROD-Dataset (本机已落地)**: `datasets/raw/rod_dataset/` 下 **4,000 图 + 4,000 标签**, 约 **225.7 MB**（train 1,000 / valid 1,371 / test 1,629 全量）。
-- **WOTR (本机已落地, 补充)**: `datasets/raw/wotr/` 下 **WOTR.zip 3.95 GiB + 解压 4.19 GB**（13,928 图 + 13,928 VOC XML, train 9,056 / val 2,338 / test 2,534）— 经 Google Drive 公开链接零凭证获取, 含盲道类 `tactile_paving→blind_road`。
+- **WOTR (本机已落地, 补充)**: `datasets/raw/wotr/` 下 **解压 4.19 GB**（13,928 图 + 13,928 VOC XML, train 9,056 / val 2,338 / test 2,534）— 经 Google Drive 公开链接零凭证获取, 含盲道类 `tactile_paving→blind_road`（全量 1,723 图 / 2,381 实例）；**WOTR.zip (3.95 GiB) 已删除回收**（解压内容校验完整, 脚本可随时重下）。
 - **磁盘闸门结果 (两次均通过)**: ROD 下载前剩余 79.2 GB → 完成后 ~78.9 GB；WOTR 下载/解压前剩余 73.2 GB → 完成后 ~65 GB。均 **NORMAL, 允许**, 无需等待批准。
 - **网络恢复**: 2026-08-31 曾因沙箱出网中断受阻；2026-09-01 实测恢复 (hf.co:443 与 drive.google.com 均可达)。
 - **校验**: ROD `verify_rod_dataset.py` → 0 损坏/0 零字节/配对完整; WOTR zip `testzip()` 通过 + 13,928 配对核对 ✅。

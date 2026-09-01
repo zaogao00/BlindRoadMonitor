@@ -2,6 +2,33 @@
 
 本项目所有重要变更记录于此。格式参考 Keep a Changelog。
 
+## [Phase 09 修订] — 2026-09-01 (WOTR 全量统计修正 + zip 清理)
+
+### Fixed (修正 — 经 workbuddy 审查确认)
+- **盲道全量数修正**: 首版 `DATASET_INFO.md` 误记盲道 "17 张/23 实例" (前缀抽查 2,000 XML 的低估值);
+  全量扫描实为 **1,723 图 / 2,381 实例** (`blind_road` 在文件后段集中分布, 抽查低估约 100 倍)。
+- **`TW` 误判移除**: 首版称 "未知类 TW 519 个需核对"; 全量确认 `object/name` 仅 20 类, **无 TW**;
+  `TW` (926 次) 位于 `<owner><name>`, 是标注者姓名, 转换阶段无需处理。
+- **转换陷阱记录**: 13,926/13,928 个 XML 的 `<filename>` 与磁盘图片名不一致 → 必须按
+  **XML stem ↔ 图片 stem** 配对 (已验证 100% 完整); 已写入 `DATASET_INFO.md` §5 必读。
+- **多源 folder 记录**: `<folder>` 含 img-train 6,071 / img-val 1,510 / img-test 1,742 / 新建文件夹 720 /
+  COCO2017 926 / VOC2007 242 / train 924 / val 246 / test 245 等 (混合源, 不影响训练)。
+
+### Removed (清理)
+- **删除 WOTR.zip (3.95 GiB)**: 解压内容已三重验证完整 (`testzip()` + 13,928 配对 + 全量统计),
+  删除回收 3.95 GiB; `scripts/download_wotr.py` 可随时重新下载 (Range 断点续传)。
+
+### Changed (变更)
+- `datasets/raw/wotr/DATASET_INFO.md` 重写 (全量类别表 + 陷阱说明 + zip 已删)
+- `docs/dataset_report.md` §0.2 / `docs/storage_report.md` §2.1 / `PROJECT_STATUS.md` 磁盘表与 Phase 09 同步修正
+
+### Safety (安全约束落实)
+- 未训练 / 未转换 / 未删除任何**用户**文件 (删除的是本项目下载的冗余压缩包, 数据无损失)
+- 删除后 D 盘剩余 **~69 GB → NORMAL**
+
+### Git
+- 提交: `Phase 09: fix WOTR stats (blind_road 1723, TW is owner) + drop redundant zip`
+
 ## [Phase 09 补充] — 2026-09-01 (WOTR 全量下载 COMPLETE)
 
 ### Added (新增)
@@ -13,7 +40,7 @@
 ### Verified (验证结果)
 - WOTR.zip 4,244,840,539 B 与 Drive 大小完全匹配; `testzip()` → 无损坏
 - JPEGImages 13,928 / Annotations 13,928 配对完整; ImageSets 划分合计 13,928 ✅
-- 抽查 2,000 XML: 含 `blind_road`(盲道) 23 个目标 / 17 张图; 另有 person/car/pole/truck 等 20 类
+- ⚠️ 首版抽查值 (17 张/23 实例) 已被后续全量统计修正 (见上方 [Phase 09 修订]); object/name 全量 20 类
 
 ### Changed (变更)
 - 盲道数据策略: Roboflow 403 (需登录)、GuideTWSI HF 401 (门控) 均不可用 → 改用 **WOTR** (唯一零凭证可获取的「盲道+障碍物」MIT 数据集), 解决盲道数据缺口

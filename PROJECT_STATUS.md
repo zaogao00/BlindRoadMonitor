@@ -3,7 +3,7 @@
 ## Phase 00 — 项目安全与磁盘管理初始化
 
 ### 当前状态 (Current Status)
-- **阶段**: Phase 00 / 02 / 03 / 04 / 05 / 06 / 07 / 08 已完成 ✅；**Phase 09 已完成 ✅** — ROD-Dataset 第一轮 4,000 图 + 4,000 标签 (225.7 MB) 及 **WOTR 全量 13,928 图 + 13,928 VOC 标注 (8.1 GB)** 下载并校验通过
+- **阶段**: Phase 00 / 02 / 03 / 04 / 05 / 06 / 07 / 08 已完成 ✅；**Phase 09 已完成 ✅** — ROD-Dataset 第一轮 4,000 图 + 4,000 标签 (225.7 MB) 及 **WOTR 全量 13,928 图 + 13,928 VOC 标注 (4.19 GB)** 下载并校验通过
 - **整体状态**: 初始化就绪, 磁盘状态 **NORMAL**, 可安全进入后续 Phase。
 - **硬件**: NVIDIA RTX 5070 (8GB VRAM)
 - **项目根目录**: `D:\BlindRoadMonitor`
@@ -15,12 +15,12 @@
 | ------------ | --------------------- | ------ |
 | 监控盘符     | D:\                   | —      |
 | 总空间       | ~200 GB (沙箱视图)    | —      |
-| 已使用       | ~135 GB (67.5%)       | —      |
-| 剩余空间     | **~65 GB** (WOTR 下载+解压后) | NORMAL (≥ 30 GB) |
+| 已使用       | ~131 GB (65.5%)       | —      |
+| 剩余空间     | **~69 GB** (WOTR 解压后, zip 已删) | NORMAL (≥ 30 GB) |
 | 项目目录占用 | ~340 MB (含数据集元数据) | 可忽略 |
 | venv 占用    | ~4.7 GB (PyTorch GPU + Ultralytics) | 已计入已使用 |
 | ROD 数据集   | 225.7 MB (4,000 图 + 4,000 标签) | 已计入已使用 |
-| WOTR 数据集  | 8.1 GB (zip 3.95 GiB + 解压 4.19 GB; 13,928 图 + VOC) | 已计入已使用 |
+| WOTR 数据集  | 4.19 GB (解压; 13,928 图 + VOC, zip 已删) | 已计入已使用 |
 
 **阈值**: NORMAL ≥ 30 GB ｜ WARNING 15~30 GB ｜ DANGER < 15 GB
 
@@ -123,7 +123,7 @@
 ### Phase 09 — 数据集安全下载 (已完成 ✅; 2026-09-01)
 - **性质**: 下载已确认数据集, **未训练、未转换**。本轮完成两个数据集:
   - **ROD-Dataset** (原生 YOLO, 24,326 图全集, HF README 标注 **MIT**): 网络恢复后从 614 张**断点续传至 4,000 张** (train 1,000 / valid 1,371 / test 1,629 全量 = 4,000 图 + 4,000 标签, 225.7 MB); 校验 0 损坏 / 0 零字节 / 配对完整 (12 空标签可忽略)。
-  - **WOTR** (VOC 格式, **MIT**, 含盲道类): 用户要求补盲道数据 → Roboflow 403/GuideTWSI 401 不可用 → 实测 **Google Drive 公开链接零凭证可达**, 全量下载 **13,928 图 + 13,928 VOC XML** (train 9,056 / val 2,338 / test 2,534), zip 3.95 GiB + 解压 4.19 GB; `testzip()` 通过, 配对完整, 抽查确认盲道类 `tactile_paving→blind_road` 存在。
+  - **WOTR** (VOC 格式, **MIT**, 含盲道类): 用户要求补盲道数据 → Roboflow 403/GuideTWSI 401 不可用 → 实测 **Google Drive 公开链接零凭证可达**, 全量下载 **13,928 图 + 13,928 VOC XML** (train 9,056 / val 2,338 / test 2,534), 解压 4.19 GB; `testzip()` 通过, 配对完整, 全量盲道 **1,723 图 / 2,381 实例** (`tactile_paving→blind_road`); WOTR.zip 已删除回收 3.95 GiB。
 - **实施修复 (环境适配, 不改数据)**:
   - ROD: curl/schannel 不可用 → requests 直写; 标签阈值 100→0; HF 限流 16→5 并发 + 429 退避;
   - WOTR: 新增 `scripts/download_wotr.py` (gdown 流程 + **Range 断点续传** + 磁盘闸门 + zip 校验)。
