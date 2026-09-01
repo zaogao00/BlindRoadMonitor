@@ -2,6 +2,36 @@
 
 本项目所有重要变更记录于此。格式参考 Keep a Changelog。
 
+## [Phase 10] — 2026-09-02 (数据集结构与标签分析 COMPLETE)
+
+### Added (新增)
+- **`docs/dataset_analysis.md`**: 结构与标签分析报告 — 格式判定 / 分辨率 / 目标尺度 / 类别方案 / YOLO 适配性 / 质量清单 / **§8 Phase 11 转换清单**。
+- **`scripts/analyze_datasets_phase10.py`**: 只读全量分析脚本 (PIL 解码校验 + MD5 去重 + VOC/YOLO 双解析器 + COCO 尺度统计)。
+- **`docs/dataset_analysis_stats.json`**: 全量统计明细 (可复现, 供报告引用)。
+
+### Analyzed (分析结果 — 全量扫描 17,928 图, 非抽样)
+- **规模**: WOTR 13,928 图 / 13,928 XML / **189,994** 实例 / 20 类; ROD 4,000 图 / 4,000 标签 / **6,073** 实例 / 25 类; 合计 **17,928 图 / 196,067 实例**。
+- **标注格式**: WOTR = **PASCAL-VOC**(纯 `<bndbox>`, 非 COCO / 非 Mask / 非 Polygon); ROD = **YOLO 原生 + Polygon 分割混合**(5,150 条 5 列框 + 923 条多边形, 涉及 843 图; 非 COCO / 非 Mask)。
+- **分辨率**: WOTR 均值 883.8×746.2 (1,390 种, 123×140 ~ 5,621×4,032); ROD 均值 584×578.5 (52 种, 73.3% 为 640×640)。
+- **目标尺度 (COCO)**: WOTR small 70,460 (37.1%) / medium 80,644 / large 38,890; ROD large 84.1%。
+- **完整性**: 损坏图 **0** / 零字节 **0** / 图片-标签配对 **100%** / 非法框 **0** / 越界框 **0** / 非法标注行 **0**; 空标签 WOTR **0**、ROD **12** (train 3 + valid 4 + test 5)。
+- **重复**: WOTR **11 组** + ROD **9 组** (MD5 完全相同, **多数跨划分** → 存在评估泄漏); 跨数据集重复 **0**。
+- **盲道类**: `blind_road` **1,723 图 / 2,381 实例** (train 1,599 / val 372 / test 410), small 仅 24 个 (1.0%) → 尺度健康; 但占总实例 **1.21%** → 核心类样本偏少。
+
+### Decided (方案决策)
+- ✅ **适合 YOLO, 但必须转换**: 两者均以水平矩形框为主; 第一阶段做 **detect** (非 seg — 盲道无任何 mask/polygon 监督, ROD 多边形仅覆盖 843 图且不含盲道); 训练 `imgsz=640`。
+- **统一 26 类**: 15 组跨集同义类合并 (person/Person、pole/Electrical Pole、bicycle/Bike(+Bicycle Rack)、roadblock/Teraffic Barrel、reflective_cone/Traffic Cone、ashcan/Dustbin、crosswalk/Pedestrian crosswalk 等)。
+- **丢弃 2 类**: `Building`(144) / `Road`(92) — 背景类, 且 Road 与 blind_road 语义冲突易混淆; ⚠️ 必须**按行剔除**标注 (不可只删 names, 否则 class id 错位)。
+- **去重策略**: 按 MD5 分组, **保留 val/test 副本, 从 train 剔除重复项** (训练集仅损失 ~14 张, 测试集保持纯净)。
+
+### Safety (安全约束落实)
+- ✅ 未训练 / **未转换** / **未修改或删除任何原始数据** (`datasets/raw/**` 零改动)。
+- ✅ 分析为纯只读 (图片仅做 PIL 解码校验与哈希计算, 无任何写入)。
+- 磁盘: **68.95 GB → NORMAL** (≥ 30 GB)。
+
+### Git
+- 提交: `Phase 10: dataset analysis`
+
 ## [Phase 09 修订] — 2026-09-01 (WOTR 全量统计修正 + zip 清理)
 
 ### Fixed (修正 — 经 workbuddy 审查确认)

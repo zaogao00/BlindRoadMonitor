@@ -131,8 +131,24 @@
 - **落盘**: `datasets/raw/rod_dataset/` + `datasets/raw/wotr/` (各含 `DATASET_INFO.md`; 均被 `.gitignore` 屏蔽)。
 - **附随文档**: `docs/dataset_report.md` (§0 WOTR 补充), `docs/storage_report.md` (§2.1 更新)。
 
+### Phase 10 — 数据集结构与标签分析 (已完成 ✅; 2026-09-02)
+- **性质**: 纯只读分析 (**全量扫描 17,928 图, 非抽样**); **未修改 / 未删除任何原始数据, 未转换, 未训练**。
+- **工具**: 新增 `scripts/analyze_datasets_phase10.py` (PIL 解码校验 + MD5 去重 + VOC/YOLO 双解析器); 输出 `docs/dataset_analysis_stats.json` (可复现)。
+- **规模**: WOTR 13,928 图 / 13,928 XML / **189,994** 实例 / 20 类; ROD 4,000 图 / 4,000 标签 / **6,073** 实例 / 25 类; 合计 **17,928 图 / 196,067 实例**。
+- **格式判定**: WOTR = **PASCAL-VOC**(纯 bbox; 非 COCO / 非 Mask / 非 Polygon); ROD = **YOLO 原生 + Polygon 分割混合**(5,150 框 + 923 多边形; 非 COCO / 非 Mask)。
+- **完整性**: 损坏图 **0** / 零字节 **0** / 配对 **100%** / 非法框 **0** / 非法标注行 **0**; 空标签 WOTR **0**、ROD **12** (0.3%, 建议留作负样本)。
+- **分辨率**: WOTR 均值 883.8×746.2 (1,390 种, 最大 5,621×4,032); ROD 均值 584×578.5 (52 种, 73% 为 640×640) → 统一 `imgsz=640` letterbox 即可。
+- **尺度 (COCO)**: WOTR small 37.1% / medium 42.4% / large 20.5%; ROD 以 large 为主 (84.1%)。
+- **盲道类**: `blind_road` **1,723 图 / 2,381 实例** (train 1,599 / val 372 / test 410); small 仅 **1.0%** (尺度健康), 但占总实例仅 **1.21%** (样本偏少, 需后续扩充)。
+- **重复与泄漏**: WOTR 11 组 + ROD 9 组重复 (**多数跨划分**, 如 `train/IMG_00021` ≡ `test/IMG_19189`); 跨数据集重复 **0**。
+- **结论**: ✅ **适合 YOLO (需转换)**; 第一阶段做 **detect** (非 seg — 盲道无任何 mask 监督), `imgsz=640`。
+- **类别方案**: 统一 **26 类** — 15 组跨集同义类合并 (person/Person、pole/Electrical Pole、bicycle/Bike、ashcan/Dustbin、crosswalk/Pedestrian crosswalk 等); **丢弃 2 类** `Building`(144) / `Road`(92) (背景类, 且 Road 与 blind_road 语义冲突); `electrical_box`→`pole`、`Bicycle Rack`→`bicycle`; ⚠️ 丢弃须**按行剔除** (不可只删 names, 否则 class id 错位)。
+- **待处理风险**: ① 划分泄漏 20 组重复 → 转换时保留 val/test、剔除 train 中的副本; ② 长尾 437:1 (person 36,238 vs plant_pot 83); ③ WOTR 小目标 37% (640 分辨率下召回损失); ④ ROD License 记录不一致 (Phase 08 记 CC BY 4.0 / Phase 09 记 MIT, 均允许商用+署名, 不阻断)。
+- **输出文档**: `docs/dataset_analysis.md` (含 **§8 Phase 11 转换清单**)。
+
 ### 下一步 (Next Steps)
-- **数据准备 (Phase 10 候选)**: 将 WOTR (VOC, 含盲道类) + ROD-Dataset (YOLO, 障碍物扩充) 做类别体系合并与格式统一 (VOC XML → YOLO txt); 本项目主目标「盲道 + 障碍物」, **WOTR 提供盲道类 (tactile_paving→blind_road), ROD 扩充街具障碍物类**; GuideTWSI 仍 401 门控, 可选后续获取。
+- **数据准备 (Phase 11 候选)**: 执行 `docs/dataset_analysis.md` §8 转换清单 — WOTR VOC→YOLO (**按 XML stem ↔ 图片 stem 配对**, 勿用 `<filename>`) + ROD 多边形→外接框 + 类名映射与 ID 重编号 + 按行剔除 Building/Road + 全局 MD5 去重 (保留 val/test、剔除 train 副本) + 统一 `data.yaml` (`nc=26`); **输出到新目录 `datasets/yolo/`, 只读 `datasets/raw/**`**。
+  - 类别体系: 26 类 (核心 `blind_road`), WOTR 提供盲道+街景障碍, ROD 扩充街具类; GuideTWSI 仍 401 门控, 可选后续获取 (补盲道分割/样本)。
 - 任何下载 / 解压 / 训练前, 必须调用 `check_before_operation()` 做闸门校验。
 - 持续监控: 定期运行 `python scripts/check_disk_space.py`, 状态低于 NORMAL 时按策略暂停或停止。
 

@@ -1,0 +1,799 @@
+{
+  "generated_by": "scripts/analyze_datasets_phase10.py (read-only)",
+  "datasets": {
+    "wotr": {
+      "path": "datasets/raw/wotr/WOTR",
+      "format": "PASCAL-VOC (XML, axis-aligned bndbox)",
+      "splits_source": "ImageSets/Main/{train,val,test}.txt",
+      "splits_declared": {
+        "train": 9056,
+        "val": 2338,
+        "test": 2534
+      },
+      "image_count": 13928,
+      "label_file_count": 13928,
+      "extensions": {
+        ".jpg": 13928
+      },
+      "corrupt_images": [],
+      "corrupt_count": 0,
+      "zero_byte_images": [],
+      "missing_label_for_image": [],
+      "resolution": {
+        "width": {
+          "min": 123,
+          "max": 5621,
+          "mean": 883.8,
+          "median": 876.0
+        },
+        "height": {
+          "min": 140,
+          "max": 4032,
+          "mean": 746.2,
+          "median": 657.0
+        },
+        "aspect_ratio": {
+          "min": 0.312,
+          "max": 4.324,
+          "mean": 1.226
+        },
+        "megapixels_mean": 0.95,
+        "top_resolutions": [
+          {
+            "size": "876x657",
+            "count": 4633
+          },
+          {
+            "size": "1020x1360",
+            "count": 1255
+          },
+          {
+            "size": "640x480",
+            "count": 981
+          },
+          {
+            "size": "300x400",
+            "count": 473
+          },
+          {
+            "size": "1920x1080",
+            "count": 464
+          },
+          {
+            "size": "640x427",
+            "count": 445
+          },
+          {
+            "size": "500x375",
+            "count": 404
+          },
+          {
+            "size": "480x640",
+            "count": 341
+          }
+        ],
+        "distinct_resolutions": 1390
+      },
+      "empty_labels": {
+        "count": 0,
+        "samples": []
+      },
+      "objects_total": 189994,
+      "objects_per_image": {
+        "mean": 13.64,
+        "max": 79,
+        "min": 1
+      },
+      "classes": {
+        "count": 20,
+        "names": [
+          "person",
+          "pole",
+          "car",
+          "tree",
+          "motorcycle",
+          "warning_column",
+          "crosswalk",
+          "bicycle",
+          "green_light",
+          "red_light",
+          "roadblock",
+          "reflective_cone",
+          "truck",
+          "sign",
+          "ashcan",
+          "blind_road",
+          "bus",
+          "tricycle",
+          "fire_hydrant",
+          "dog"
+        ],
+        "instances": {
+          "person": 35245,
+          "pole": 31144,
+          "car": 27583,
+          "tree": 22515,
+          "motorcycle": 12162,
+          "warning_column": 10431,
+          "crosswalk": 8558,
+          "bicycle": 5995,
+          "green_light": 4965,
+          "red_light": 4961,
+          "roadblock": 4402,
+          "reflective_cone": 4125,
+          "truck": 3537,
+          "sign": 3360,
+          "ashcan": 2857,
+          "blind_road": 2381,
+          "bus": 1787,
+          "tricycle": 1580,
+          "fire_hydrant": 1384,
+          "dog": 1022
+        },
+        "images_per_class": {
+          "pole": 8569,
+          "person": 7708,
+          "car": 7352,
+          "tree": 6462,
+          "crosswalk": 5268,
+          "motorcycle": 4294,
+          "warning_column": 3118,
+          "red_light": 3102,
+          "bicycle": 3101,
+          "green_light": 2972,
+          "truck": 2555,
+          "sign": 2549,
+          "ashcan": 2267,
+          "blind_road": 1723,
+          "bus": 1360,
+          "tricycle": 1331,
+          "reflective_cone": 1308,
+          "fire_hydrant": 1306,
+          "roadblock": 1093,
+          "dog": 786
+        },
+        "instances_by_split": {
+          "person": {
+            "train": 23288,
+            "test": 6099,
+            "val": 5858
+          },
+          "pole": {
+            "train": 21120,
+            "test": 5240,
+            "val": 4784
+          },
+          "car": {
+            "train": 18371,
+            "test": 4840,
+            "val": 4372
+          },
+          "tree": {
+            "train": 15613,
+            "test": 3667,
+            "val": 3235
+          },
+          "motorcycle": {
+            "train": 8065,
+            "test": 2205,
+            "val": 1892
+          },
+          "warning_column": {
+            "train": 7099,
+            "test": 1681,
+            "val": 1651
+          },
+          "crosswalk": {
+            "train": 5737,
+            "test": 1493,
+            "val": 1328
+          },
+          "bicycle": {
+            "train": 4015,
+            "test": 992,
+            "val": 988
+          },
+          "green_light": {
+            "train": 3269,
+            "test": 902,
+            "val": 794
+          },
+          "red_light": {
+            "train": 3242,
+            "test": 873,
+            "val": 846
+          },
+          "roadblock": {
+            "train": 2978,
+            "test": 728,
+            "val": 696
+          },
+          "reflective_cone": {
+            "train": 2549,
+            "test": 819,
+            "val": 757
+          },
+          "truck": {
+            "train": 2289,
+            "test": 657,
+            "val": 591
+          },
+          "sign": {
+            "train": 2189,
+            "test": 625,
+            "val": 546
+          },
+          "ashcan": {
+            "train": 1869,
+            "test": 524,
+            "val": 464
+          },
+          "blind_road": {
+            "train": 1599,
+            "test": 410,
+            "val": 372
+          },
+          "bus": {
+            "train": 1117,
+            "test": 358,
+            "val": 312
+          },
+          "tricycle": {
+            "train": 1025,
+            "test": 295,
+            "val": 260
+          },
+          "fire_hydrant": {
+            "train": 905,
+            "test": 246,
+            "val": 233
+          },
+          "dog": {
+            "train": 665,
+            "test": 193,
+            "val": 164
+          }
+        }
+      },
+      "bbox_scale_coco": {
+        "large": 38890,
+        "medium": 80644,
+        "small": 70460
+      },
+      "bbox_scale_small_by_class": {
+        "person": 15851,
+        "car": 9823,
+        "warning_column": 8056,
+        "tree": 8010,
+        "pole": 7513,
+        "green_light": 4021,
+        "red_light": 3762,
+        "motorcycle": 3202,
+        "bicycle": 2467,
+        "sign": 2110,
+        "roadblock": 1960,
+        "reflective_cone": 1358,
+        "ashcan": 663,
+        "truck": 607,
+        "fire_hydrant": 472,
+        "bus": 262,
+        "crosswalk": 130,
+        "dog": 106,
+        "tricycle": 63,
+        "blind_road": 24
+      },
+      "bbox_area_px": {
+        "median": 1712.0,
+        "mean": 26188.5,
+        "p95": 143008.0
+      },
+      "quality_flags": {
+        "invalid_bbox": 0,
+        "out_of_bounds_bbox": 0,
+        "truncated_objects": 28480,
+        "difficult_objects": 354,
+        "xml_size_vs_image_mismatch": 0
+      },
+      "images_without_split_assignment": 0,
+      "duplicate_images": {
+        "groups": 11,
+        "extra_files": 11,
+        "samples": [
+          [
+            "10005418.jpg",
+            "10005592.jpg"
+          ],
+          [
+            "10006844.jpg",
+            "10007434.jpg"
+          ],
+          [
+            "10007008.jpg",
+            "10007453.jpg"
+          ],
+          [
+            "10007030.jpg",
+            "20006850.jpg"
+          ],
+          [
+            "10007136.jpg",
+            "10007343.jpg"
+          ],
+          [
+            "10007473.jpg",
+            "20007426.jpg"
+          ],
+          [
+            "10007690.jpg",
+            "30007264.jpg"
+          ],
+          [
+            "10008843.jpg",
+            "20008844.jpg"
+          ],
+          [
+            "10008847.jpg",
+            "30008846.jpg"
+          ],
+          [
+            "20007314.jpg",
+            "30007026.jpg"
+          ]
+        ]
+      }
+    },
+    "rod": {
+      "path": "datasets/raw/rod_dataset",
+      "format": "YOLO native (txt: 5-col bbox + >5-col polygon seg, mixed)",
+      "splits_source": "directory layout {train,valid,test}/images",
+      "data_yaml": {
+        "nc": 25,
+        "names": [
+          "Bike",
+          "Building",
+          "Car",
+          "Person",
+          "Stairs",
+          "Traffic sign",
+          "Electrical Pole",
+          "Road",
+          "Motorcycle",
+          "Dustbin",
+          "Dog",
+          "Manhole",
+          "Tree",
+          "Guard rail",
+          "Pedestrian crosswalk",
+          "Truck",
+          "Bus",
+          "Bench",
+          "Traffic Cone",
+          "Fire hydrant",
+          "Teraffic Barrel",
+          "Plant Pot",
+          "Electrical Box",
+          "Chair",
+          "Bicycle Rack"
+        ]
+      },
+      "image_count": 4000,
+      "label_file_count": 4000,
+      "splits": {
+        "train": {
+          "images": 1000,
+          "labels": 1000
+        },
+        "val": {
+          "images": 1371,
+          "labels": 1371
+        },
+        "test": {
+          "images": 1629,
+          "labels": 1629
+        }
+      },
+      "extensions": {
+        ".jpg": 4000
+      },
+      "corrupt_images": [],
+      "corrupt_count": 0,
+      "zero_byte_images": [],
+      "missing_label_for_image": [],
+      "resolution": {
+        "width": {
+          "min": 197,
+          "max": 1600,
+          "mean": 584.0,
+          "median": 640.0
+        },
+        "height": {
+          "min": 150,
+          "max": 1200,
+          "mean": 578.5,
+          "median": 640.0
+        },
+        "aspect_ratio": {
+          "min": 0.716,
+          "max": 1.916,
+          "mean": 1.013
+        },
+        "megapixels_mean": 0.349,
+        "top_resolutions": [
+          {
+            "size": "640x640",
+            "count": 2930
+          },
+          {
+            "size": "416x416",
+            "count": 574
+          },
+          {
+            "size": "300x300",
+            "count": 212
+          },
+          {
+            "size": "512x512",
+            "count": 155
+          },
+          {
+            "size": "640x480",
+            "count": 73
+          },
+          {
+            "size": "600x400",
+            "count": 4
+          },
+          {
+            "size": "800x600",
+            "count": 3
+          },
+          {
+            "size": "259x194",
+            "count": 2
+          }
+        ],
+        "distinct_resolutions": 52
+      },
+      "empty_labels": {
+        "count": 12,
+        "samples": [
+          "train/IMG_13674",
+          "train/IMG_14039",
+          "train/IMG_18254",
+          "valid/IMG_23505",
+          "valid/IMG_23510",
+          "valid/IMG_23516",
+          "valid/IMG_23517",
+          "test/IMG_19205",
+          "test/IMG_19206",
+          "test/IMG_20452",
+          "test/IMG_20456",
+          "test/IMG_20457"
+        ]
+      },
+      "annotation_lines": {
+        "detection_bbox": 5150,
+        "segmentation_polygon": 923,
+        "invalid": 0,
+        "images_with_detection": 3148,
+        "images_with_segmentation": 843
+      },
+      "objects_total": 6073,
+      "objects_per_image": {
+        "mean": 1.52,
+        "max": 30,
+        "min": 0
+      },
+      "classes": {
+        "count_declared": 25,
+        "count_present": 25,
+        "names_declared": [
+          "Bike",
+          "Building",
+          "Car",
+          "Person",
+          "Stairs",
+          "Traffic sign",
+          "Electrical Pole",
+          "Road",
+          "Motorcycle",
+          "Dustbin",
+          "Dog",
+          "Manhole",
+          "Tree",
+          "Guard rail",
+          "Pedestrian crosswalk",
+          "Truck",
+          "Bus",
+          "Bench",
+          "Traffic Cone",
+          "Fire hydrant",
+          "Teraffic Barrel",
+          "Plant Pot",
+          "Electrical Box",
+          "Chair",
+          "Bicycle Rack"
+        ],
+        "names_present": [
+          "Person",
+          "Car",
+          "Manhole",
+          "Pedestrian crosswalk",
+          "Stairs",
+          "Chair",
+          "Tree",
+          "Guard rail",
+          "Traffic Cone",
+          "Traffic sign",
+          "Dustbin",
+          "Building",
+          "Bus",
+          "Truck",
+          "Motorcycle",
+          "Bike",
+          "Electrical Pole",
+          "Road",
+          "Dog",
+          "Bench",
+          "Plant Pot",
+          "Electrical Box",
+          "Teraffic Barrel",
+          "Bicycle Rack",
+          "Fire hydrant"
+        ],
+        "instances": {
+          "Person": 993,
+          "Car": 823,
+          "Manhole": 502,
+          "Pedestrian crosswalk": 479,
+          "Stairs": 419,
+          "Chair": 400,
+          "Tree": 392,
+          "Guard rail": 229,
+          "Traffic Cone": 195,
+          "Traffic sign": 169,
+          "Dustbin": 154,
+          "Building": 144,
+          "Bus": 141,
+          "Truck": 126,
+          "Motorcycle": 123,
+          "Bike": 105,
+          "Electrical Pole": 101,
+          "Road": 92,
+          "Dog": 86,
+          "Bench": 84,
+          "Plant Pot": 83,
+          "Electrical Box": 71,
+          "Teraffic Barrel": 64,
+          "Bicycle Rack": 53,
+          "Fire hydrant": 45
+        },
+        "images_per_class": {
+          "Car": 487,
+          "Manhole": 483,
+          "Pedestrian crosswalk": 369,
+          "Person": 335,
+          "Chair": 296,
+          "Stairs": 296,
+          "Tree": 283,
+          "Guard rail": 180,
+          "Traffic Cone": 152,
+          "Building": 141,
+          "Traffic sign": 135,
+          "Truck": 115,
+          "Dustbin": 106,
+          "Bike": 100,
+          "Electrical Pole": 96,
+          "Bus": 95,
+          "Road": 88,
+          "Dog": 81,
+          "Motorcycle": 78,
+          "Bench": 77,
+          "Electrical Box": 61,
+          "Plant Pot": 57,
+          "Fire hydrant": 45,
+          "Bicycle Rack": 41,
+          "Teraffic Barrel": 39
+        },
+        "instances_by_split": {
+          "Person": {
+            "train": 325,
+            "val": 348,
+            "test": 320
+          },
+          "Car": {
+            "train": 211,
+            "val": 365,
+            "test": 247
+          },
+          "Manhole": {
+            "train": 94,
+            "val": 166,
+            "test": 242
+          },
+          "Pedestrian crosswalk": {
+            "train": 110,
+            "val": 180,
+            "test": 189
+          },
+          "Stairs": {
+            "train": 62,
+            "val": 134,
+            "test": 223
+          },
+          "Chair": {
+            "train": 68,
+            "val": 164,
+            "test": 168
+          },
+          "Tree": {
+            "train": 111,
+            "val": 131,
+            "test": 150
+          },
+          "Guard rail": {
+            "train": 101,
+            "val": 59,
+            "test": 69
+          },
+          "Traffic Cone": {
+            "train": 29,
+            "val": 74,
+            "test": 92
+          },
+          "Traffic sign": {
+            "train": 33,
+            "val": 32,
+            "test": 104
+          },
+          "Dustbin": {
+            "train": 59,
+            "val": 50,
+            "test": 45
+          },
+          "Building": {
+            "train": 45,
+            "val": 45,
+            "test": 54
+          },
+          "Bus": {
+            "train": 24,
+            "val": 62,
+            "test": 55
+          },
+          "Truck": {
+            "train": 28,
+            "val": 55,
+            "test": 43
+          },
+          "Motorcycle": {
+            "train": 57,
+            "val": 29,
+            "test": 37
+          },
+          "Bike": {
+            "train": 19,
+            "val": 37,
+            "test": 49
+          },
+          "Electrical Pole": {
+            "train": 25,
+            "val": 34,
+            "test": 42
+          },
+          "Road": {
+            "train": 25,
+            "val": 30,
+            "test": 37
+          },
+          "Dog": {
+            "train": 24,
+            "val": 32,
+            "test": 30
+          },
+          "Bench": {
+            "train": 40,
+            "val": 16,
+            "test": 28
+          },
+          "Plant Pot": {
+            "train": 36,
+            "val": 13,
+            "test": 34
+          },
+          "Electrical Box": {
+            "train": 25,
+            "val": 12,
+            "test": 34
+          },
+          "Teraffic Barrel": {
+            "train": 37,
+            "val": 8,
+            "test": 19
+          },
+          "Bicycle Rack": {
+            "train": 10,
+            "val": 7,
+            "test": 36
+          },
+          "Fire hydrant": {
+            "train": 12,
+            "val": 8,
+            "test": 25
+          }
+        },
+        "missing_from_sample": []
+      },
+      "bbox_scale_coco": {
+        "large": 5106,
+        "small": 191,
+        "medium": 776
+      },
+      "bbox_scale_small_by_class": {
+        "Car": 60,
+        "Pedestrian crosswalk": 53,
+        "Person": 49,
+        "Guard rail": 13,
+        "Bus": 6,
+        "Traffic sign": 6,
+        "Manhole": 2,
+        "Stairs": 1,
+        "Truck": 1
+      },
+      "bbox_area_px": {
+        "median": 84760.0,
+        "mean": 115797.9,
+        "p95": 351342.0
+      },
+      "quality_flags": {
+        "class_id_out_of_range": {},
+        "coords_out_of_0_1": 0,
+        "invalid_lines": 0
+      },
+      "duplicate_images": {
+        "groups": 9,
+        "extra_files": 9,
+        "samples": [
+          [
+            "train/IMG_00021.jpg",
+            "test/IMG_19189.jpg"
+          ],
+          [
+            "train/IMG_00217.jpg",
+            "test/IMG_19196.jpg"
+          ],
+          [
+            "train/IMG_06946.jpg",
+            "valid/IMG_22248.jpg"
+          ],
+          [
+            "train/IMG_06981.jpg",
+            "valid/IMG_22286.jpg"
+          ],
+          [
+            "valid/IMG_22208.jpg",
+            "test/IMG_19774.jpg"
+          ],
+          [
+            "valid/IMG_22255.jpg",
+            "test/IMG_19788.jpg"
+          ],
+          [
+            "valid/IMG_22256.jpg",
+            "test/IMG_19789.jpg"
+          ],
+          [
+            "valid/IMG_22310.jpg",
+            "test/IMG_19800.jpg"
+          ],
+          [
+            "valid/IMG_22317.jpg",
+            "valid/IMG_22318.jpg"
+          ]
+        ]
+      }
+    }
+  },
+  "cross_dataset_duplicates": 0,
+  "pil_available": true
+}
