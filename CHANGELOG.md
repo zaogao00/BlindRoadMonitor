@@ -15,14 +15,14 @@
 - **分辨率**: WOTR 均值 883.8×746.2 (1,390 种, 123×140 ~ 5,621×4,032); ROD 均值 584×578.5 (52 种, 73.3% 为 640×640)。
 - **目标尺度 (COCO)**: WOTR small 70,460 (37.1%) / medium 80,644 / large 38,890; ROD large 84.1%。
 - **完整性**: 损坏图 **0** / 零字节 **0** / 图片-标签配对 **100%** / 非法框 **0** / 越界框 **0** / 非法标注行 **0**; 空标签 WOTR **0**、ROD **12** (train 3 + valid 4 + test 5)。
-- **重复**: WOTR **11 组** + ROD **9 组** (MD5 完全相同, **多数跨划分** → 存在评估泄漏); 跨数据集重复 **0**。
+- **重复**: WOTR **11 组** + ROD **9 组** = 20 组 (MD5 完全相同), 其中 **15 组跨划分** → 存在评估泄漏 (WOTR 7: train↔test ×3 / train↔val ×2 / test↔val ×2; ROD 8: valid↔test ×4 / train↔test ×2 / train↔valid ×2; 余 5 组为划分内部); 跨数据集重复 **0**。
 - **盲道类**: `blind_road` **1,723 图 / 2,381 实例** (train 1,599 / val 372 / test 410), small 仅 24 个 (1.0%) → 尺度健康; 但占总实例 **1.21%** → 核心类样本偏少。
 
 ### Decided (方案决策)
 - ✅ **适合 YOLO, 但必须转换**: 两者均以水平矩形框为主; 第一阶段做 **detect** (非 seg — 盲道无任何 mask/polygon 监督, ROD 多边形仅覆盖 843 图且不含盲道); 训练 `imgsz=640`。
 - **统一 26 类**: 15 组跨集同义类合并 (person/Person、pole/Electrical Pole、bicycle/Bike(+Bicycle Rack)、roadblock/Teraffic Barrel、reflective_cone/Traffic Cone、ashcan/Dustbin、crosswalk/Pedestrian crosswalk 等)。
 - **丢弃 2 类**: `Building`(144) / `Road`(92) — 背景类, 且 Road 与 blind_road 语义冲突易混淆; ⚠️ 必须**按行剔除**标注 (不可只删 names, 否则 class id 错位)。
-- **去重策略**: 按 MD5 分组, **保留 val/test 副本, 从 train 剔除重复项** (训练集仅损失 ~14 张, 测试集保持纯净)。
+- **去重策略**: 按 MD5 分组, **保留 val/test 副本, 从 train 剔除重复项** (训练集精确损失 **13 张** = WOTR 9 + ROD 4, 测试集保持纯净)。
 
 ### Safety (安全约束落实)
 - ✅ 未训练 / **未转换** / **未修改或删除任何原始数据** (`datasets/raw/**` 零改动)。
@@ -31,6 +31,22 @@
 
 ### Git
 - 提交: `Phase 10: dataset analysis`
+
+## [Phase 10 修订] — 2026-09-02 (报告数字一致性修正)
+
+### Fixed (修正 — 经全量 MD5 复算确认)
+- **合并组数 11 → 15**: §6.1 中「合并」判定实为 **15** 个 (person / pole / car / tree / motorcycle / crosswalk / bicycle / roadblock / cone / truck / sign / trash_bin / bus / fire_hydrant / dog), §6.2 映射亦为 15 组; 原句「最终压并为 11 个合并类」一并更正为「对应 §6.1 中 15 个『合并』判定类」。
+- **WOTR 跨划分重复 5+ → 精确 7 组**: train↔test ×3、train↔val ×2、**test↔val ×2** (`20007314`↔`30007026`、`20007693`↔`30007123`); 另 4 组为 train 内部重复, 非泄漏。
+- **「17 组」→ 15 组跨划分** (§0 TL;DR + §7.1): 原值基于「5+ 组」估算, WOTR 精确为 7 后未回改汇总; 精确账 = 跨划分 **15** (WOTR 7 + ROD 8), 总重复组 **20** (11 + 9)。
+- **「~14 张」→ 精确 13 张** (§7.2 + 本文件): WOTR 9 (train 内部 4 + 跨划分 5) + ROD 4。
+- **「长尾 32:1」→ 437:1** (§0 TL;DR): 32:1 无法从任何口径复现 (合并 26 类 437:1 / WOTR 20 类 34.5:1 / ROD 25 类 22.1:1 / person:blind_road 14.8:1), 统一为 §6.4 的合并后 **437:1** (person 36,238 vs plant_pot 83)。
+- §7.2 增补**合计行** (20 组 / 20 张 / 15 组跨 split), 使 TL;DR 与明细可直接对账, 避免再次出现「改一处漏三处」。
+
+### Synced (跨文档同步)
+- `PROJECT_STATUS.md`: 「重复与泄漏」「待处理风险」「Phase 11 转换清单」三处同步为 **20 组重复 (15 组跨划分)** 与 **13 张**待剔除副本。
+
+### Git
+- 提交: `Phase 10: fix dataset analysis number consistency`
 
 ## [Phase 09 修订] — 2026-09-01 (WOTR 全量统计修正 + zip 清理)
 

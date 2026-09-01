@@ -140,14 +140,14 @@
 - **分辨率**: WOTR 均值 883.8×746.2 (1,390 种, 最大 5,621×4,032); ROD 均值 584×578.5 (52 种, 73% 为 640×640) → 统一 `imgsz=640` letterbox 即可。
 - **尺度 (COCO)**: WOTR small 37.1% / medium 42.4% / large 20.5%; ROD 以 large 为主 (84.1%)。
 - **盲道类**: `blind_road` **1,723 图 / 2,381 实例** (train 1,599 / val 372 / test 410); small 仅 **1.0%** (尺度健康), 但占总实例仅 **1.21%** (样本偏少, 需后续扩充)。
-- **重复与泄漏**: WOTR 11 组 + ROD 9 组重复 (**多数跨划分**, 如 `train/IMG_00021` ≡ `test/IMG_19189`); 跨数据集重复 **0**。
+- **重复与泄漏**: WOTR 11 组 + ROD 9 组重复 = **20 组, 其中 15 组跨划分** (WOTR 7: train↔test ×3 / train↔val ×2 / test↔val ×2; ROD 8: valid↔test ×4 / train↔test ×2 / train↔valid ×2; 余 5 组为划分内部), 如 `train/IMG_00021` ≡ `test/IMG_19189`; 跨数据集重复 **0**。
 - **结论**: ✅ **适合 YOLO (需转换)**; 第一阶段做 **detect** (非 seg — 盲道无任何 mask 监督), `imgsz=640`。
 - **类别方案**: 统一 **26 类** — 15 组跨集同义类合并 (person/Person、pole/Electrical Pole、bicycle/Bike、ashcan/Dustbin、crosswalk/Pedestrian crosswalk 等); **丢弃 2 类** `Building`(144) / `Road`(92) (背景类, 且 Road 与 blind_road 语义冲突); `electrical_box`→`pole`、`Bicycle Rack`→`bicycle`; ⚠️ 丢弃须**按行剔除** (不可只删 names, 否则 class id 错位)。
-- **待处理风险**: ① 划分泄漏 20 组重复 → 转换时保留 val/test、剔除 train 中的副本; ② 长尾 437:1 (person 36,238 vs plant_pot 83); ③ WOTR 小目标 37% (640 分辨率下召回损失); ④ ROD License 记录不一致 (Phase 08 记 CC BY 4.0 / Phase 09 记 MIT, 均允许商用+署名, 不阻断)。
+- **待处理风险**: ① 划分泄漏 **20 组重复 (15 组跨划分)** → 转换时保留 val/test、从 train 精确剔除 **13 张**副本; ② 长尾 437:1 (person 36,238 vs plant_pot 83); ③ WOTR 小目标 37% (640 分辨率下召回损失); ④ ROD License 记录不一致 (Phase 08 记 CC BY 4.0 / Phase 09 记 MIT, 均允许商用+署名, 不阻断)。
 - **输出文档**: `docs/dataset_analysis.md` (含 **§8 Phase 11 转换清单**)。
 
 ### 下一步 (Next Steps)
-- **数据准备 (Phase 11 候选)**: 执行 `docs/dataset_analysis.md` §8 转换清单 — WOTR VOC→YOLO (**按 XML stem ↔ 图片 stem 配对**, 勿用 `<filename>`) + ROD 多边形→外接框 + 类名映射与 ID 重编号 + 按行剔除 Building/Road + 全局 MD5 去重 (保留 val/test、剔除 train 副本) + 统一 `data.yaml` (`nc=26`); **输出到新目录 `datasets/yolo/`, 只读 `datasets/raw/**`**。
+- **数据准备 (Phase 11 候选)**: 执行 `docs/dataset_analysis.md` §8 转换清单 — WOTR VOC→YOLO (**按 XML stem ↔ 图片 stem 配对**, 勿用 `<filename>`) + ROD 多边形→外接框 + 类名映射与 ID 重编号 + 按行剔除 Building/Road + 全局 MD5 去重 (保留 val/test、从 train 精确剔除 **13 张**副本) + 统一 `data.yaml` (`nc=26`); **输出到新目录 `datasets/yolo/`, 只读 `datasets/raw/**`**。
   - 类别体系: 26 类 (核心 `blind_road`), WOTR 提供盲道+街景障碍, ROD 扩充街具类; GuideTWSI 仍 401 门控, 可选后续获取 (补盲道分割/样本)。
 - 任何下载 / 解压 / 训练前, 必须调用 `check_before_operation()` 做闸门校验。
 - 持续监控: 定期运行 `python scripts/check_disk_space.py`, 状态低于 NORMAL 时按策略暂停或停止。
