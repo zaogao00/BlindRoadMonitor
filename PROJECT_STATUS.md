@@ -3,7 +3,7 @@
 ## Phase 00 — 项目安全与磁盘管理初始化
 
 ### 当前状态 (Current Status)
-- **阶段**: Phase 00 / 02–09 已完成 ✅；**Phase 10 数据集分析 已完成 ✅**；**Phase 11 YOLO 数据集转换 已完成 ✅** — WOTR + ROD 合并转换为 **17,908 图 / 195,719 实例 / 26 类** YOLO detection 数据集 (`datasets/processed/`), 自检 PASSED
+- **阶段**: Phase 00 / 02–09 已完成 ✅；**Phase 10 数据集分析 已完成 ✅**；**Phase 11 YOLO 数据集转换 已完成 ✅** (17,908 图 / 195,719 实例 / 26 类, `datasets/processed/`, 自检 PASSED)；**Phase 12 可视化质量检查 已完成 ✅** — 120 张采样 (1,335 实例) 全部**正常**, 无严重标签错误, 可进入训练
 - **整体状态**: 初始化就绪, 磁盘状态 **NORMAL**, 可安全进入后续 Phase (训练)。
 - **硬件**: NVIDIA RTX 5070 (8GB VRAM)
 - **项目根目录**: `D:\BlindRoadMonitor`
@@ -16,12 +16,13 @@
 | 监控盘符     | D:\                   | —      |
 | 总空间       | ~200 GB (沙箱视图)    | —      |
 | 已使用       | ~135.5 GB (67.7%)     | —      |
-| 剩余空间     | **~64.5 GB** (Phase 11 转换后) | NORMAL (≥ 30 GB) |
+| 剩余空间     | **~64.5 GB** (Phase 11/12 后) | NORMAL (≥ 30 GB) |
 | 项目目录占用 | ~8.8 GB (raw 4.41 + processed 4.37, 不含 venv) | 已计入已使用 |
 | venv 占用    | ~4.7 GB (PyTorch GPU + Ultralytics) | 已计入已使用 |
 | ROD 数据集   | 225.7 MB (raw; 4,000 图 + 4,000 标签) | 已计入已使用 |
 | WOTR 数据集  | 4.19 GB (raw; 13,928 图 + VOC) | 已计入已使用 |
 | processed    | 4.37 GB (YOLO; 17,908 图 + 标签) | 已计入已使用 |
+| preview      | 16.1 MB (Phase 12 可视化; 121 张) | 已计入已使用 |
 
 **阈值**: NORMAL ≥ 30 GB ｜ WARNING 15~30 GB ｜ DANGER < 15 GB
 
@@ -158,8 +159,18 @@
 - **磁盘**: raw 4.41 + processed 4.37 ≈ 8.8 GB; 转换后 D 盘剩余 ~64.5 GB (**NORMAL** ≥ 30 GB, 未触发闸门报警)。
 - **文档**: `docs/dataset_report.md` §11, `docs/dataset_analysis.md` §8 已标注"已执行"并统一输出目录为 `datasets/processed/`。
 
+### Phase 12 — 数据可视化质量检查 (已完成 ✅; 2026-09-02)
+- **性质**: 随机采样 ≥100 张训练图 (实际 **120 张**, 优先覆盖含 `blind_road` 的图), 将图片 + YOLO 标签绘制到一起进行可视化质检; 纯只读 (仅输出预览图, 未改动 processed/raw)。
+- **工具**: 新增 `scripts/visualize_dataset_quality.py` (采样 + 绘制 + 数值校验); 输出 `datasets/preview/` (120 单图 + 汇总拼贴) + `docs/dataset_quality_stats.json`。
+- **抽样**: 120 图 / **1,335 实例** / 0 空标签; `blind_road` 命中 **53 实例**; 覆盖 25/26 类 (唯一未命中 plant_pot, 全训练集仅 36 实例)。
+- **数值检查**: 类 ID 越界 **0** / 坐标越界 **0** / 框非法 **0** / 框序颠倒 **0** / 非 5 列行 **0** / 图不可读 **0** / 配对缺失 **0**。
+- **语义检查**: 盲道框形健康 (面积 mean 25.8%, 横向为主); 28 条几何异常候选复核全部合理 — 25 条为远景小目标 (roadblock/cone/立柱, 数据集固有特性), 3 条超大框溯源确认: `car 97.3%` 图经 **YOLOv8n 模型辅助验证** (检出 car conf 0.79 区域与标注高度吻合, 继承自 COCO 的标注可信), 2 条 tricycle 为作者自采近景特写。
+- **结论**: **未发现严重标签错误** → 不触发「停止/不要训练」; 120 张全部**正常**, 0 异常, 0 无法使用; **可进入训练阶段**。
+- **提醒 (非阻断)**: WOTR 远景小目标占比高 (关注小目标召回); `plant_pot`/`bench` 长尾类极少; tricycle 2 个超大框建议训练前人工抽查 (低风险)。
+- **输出文档**: `docs/dataset_quality_report.md` (完整统计与结论)。
+
 ### 下一步 (Next Steps)
-- **模型训练 (Phase 12 候选)**: 使用 `datasets/processed/data.yaml` 训练 YOLOv8n/v11n (detect), `imgsz=640`, `batch=16` (OOM 降 8), `epoch=100–200`, `amp=True`; 重点关注核心类 `blind_road` (1,723 图 / 2,381 实例, 仅占 1.21%) 的召回与 mAP; 评估长尾类 (437:1) 与 WOTR 小目标 (37%) 影响。
+- **模型训练 (Phase 13 候选)**: 使用 `datasets/processed/data.yaml` 训练 YOLOv8n/v11n (detect), `imgsz=640`, `batch=16` (OOM 降 8), `epoch=100–200`, `amp=True`; 重点关注核心类 `blind_road` (1,723 图 / 2,381 实例, 仅占 1.21%) 的召回与 mAP; 评估长尾类 (437:1) 与 WOTR 小目标 (37%) 影响。
 - 任何下载 / 解压 / 训练前, 必须调用 `check_before_operation()` 做闸门校验。
 - 持续监控: 定期运行 `python scripts/check_disk_space.py`, 状态低于 NORMAL 时按策略暂停或停止。
 

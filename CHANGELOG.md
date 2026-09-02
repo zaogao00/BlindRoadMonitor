@@ -2,6 +2,36 @@
 
 本项目所有重要变更记录于此。格式参考 Keep a Changelog。
 
+## [Phase 12] — 2026-09-02 (数据可视化质量检查 COMPLETE)
+
+### Added (新增)
+- **`scripts/visualize_dataset_quality.py`**: 可视化质检脚本 (随机采样训练图, 优先覆盖含 blind_road 的图; 图片+YOLO 标签绘制; 数值校验; 输出预览图与统计 JSON)
+- **`datasets/preview/`**: 120 张标注预览图 + `_summary_grid.jpg` 汇总拼贴 (16.1 MB; 已 gitignore, 不入库)
+- **`docs/dataset_quality_report.md`**: 质检报告 (采样统计 / 数值与语义检查 / 正常-异常-无法使用统计 / 结论)
+- **`docs/dataset_quality_stats.json`**: 质检统计 (seed=20260902, 可复现)
+
+### Checked (检查结果 — 120 张 / 1,335 实例)
+- **数值**: 类 ID 越界 0 / 坐标越界 0 / 框非法 0 / 框序颠倒 0 / 非 5 列行 0 / 图不可读 0 / 配对缺失 0
+- **盲道**: 53 实例命中, 框形健康 (面积 mean 25.8%, 横向条带为主), 位置合理
+- **几何异常复核 28 条 → 全部合理**: 25 条远景小目标 (roadblock/cone/立柱, 数据集固有特性);
+  3 条超大框溯源 — `car 97.3%` 图经 **YOLOv8n 模型辅助验证** (检出 car conf 0.79 区域与标注吻合, COCO 继承标注可信);
+  2 条 tricycle 为作者自采近景特写
+- **结论**: 120 张全部**正常** (0 异常 / 0 无法使用), **未发现严重标签错误** → 不触发「停止/不要训练」, 可进入训练
+
+### Reminders (非阻断提醒)
+- WOTR 远景小目标占比高 → 关注小目标召回; `plant_pot`/`bench` 长尾类极少 (83/84) → 建议类别权重/过采样;
+  tricycle 2 个超大框建议训练前人工抽查 (低风险)
+
+### Safety (安全约束落实)
+- 纯只读检查 (仅输出预览图与报告); `datasets/processed/**` 与 `datasets/raw/**` 零改动
+- 预览输出落入 `datasets/preview/` (`.gitignore` 屏蔽, 不入库); D 盘剩余 ~64.5 GB → NORMAL
+
+### Docs (文档同步)
+- `PROJECT_STATUS.md` 当前状态/磁盘表/Phase 12/下一步 (Phase 13 训练候选) 更新
+
+### Git
+- 提交: `Phase 12: dataset quality validation`
+
 ## [Phase 11] — 2026-09-02 (YOLO 数据集转换 COMPLETE)
 
 ### Added (新增)
