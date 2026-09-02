@@ -3,8 +3,8 @@
 ## Phase 00 — 项目安全与磁盘管理初始化
 
 ### 当前状态 (Current Status)
-- **阶段**: Phase 00 / 02–09 已完成 ✅；**Phase 10 数据集分析 已完成 ✅**；**Phase 11 YOLO 数据集转换 已完成 ✅** (17,908 图 / 195,719 实例 / 26 类, `datasets/processed/`, 自检 PASSED)；**Phase 12 可视化质量检查 已完成 ✅** — 120 张采样 (1,335 实例) 全部**正常**, 无严重标签错误, 可进入训练
-- **整体状态**: 初始化就绪, 磁盘状态 **NORMAL**, 可安全进入后续 Phase (训练)。
+- **阶段**: Phase 00 / 02–09 已完成 ✅；**Phase 10 数据集分析 已完成 ✅**；**Phase 11 YOLO 数据集转换 已完成 ✅** (17,908 图 / 195,719 实例 / 26 类)；**Phase 12 可视化质量检查 已完成 ✅** (120 张全部正常)；**Phase 13 小规模训练验证 已完成 ✅** — YOLOv8n smoke test (450 图 / 10 epochs / 103 s / mAP50 0.303 / loss 正常下降 / 无 OOM)
+- **整体状态**: 训练管线验证通过, 磁盘状态 **NORMAL**, 可进入全量正式训练 (Phase 14 候选)。
 - **硬件**: NVIDIA RTX 5070 (8GB VRAM)
 - **项目根目录**: `D:\BlindRoadMonitor`
 
@@ -15,14 +15,15 @@
 | ------------ | --------------------- | ------ |
 | 监控盘符     | D:\                   | —      |
 | 总空间       | ~200 GB (沙箱视图)    | —      |
-| 已使用       | ~135.5 GB (67.7%)     | —      |
-| 剩余空间     | **~64.5 GB** (Phase 11/12 后) | NORMAL (≥ 30 GB) |
-| 项目目录占用 | ~8.8 GB (raw 4.41 + processed 4.37, 不含 venv) | 已计入已使用 |
+| 已使用       | ~135.7 GB (67.9%)     | —      |
+| 剩余空间     | **~64.3 GB** (Phase 13 后) | NORMAL (≥ 30 GB) |
+| 项目目录占用 | ~8.9 GB (raw 4.41 + processed 4.37 + runs 权重 ~50 MB + smoke 126 MB) | 已计入已使用 |
 | venv 占用    | ~4.7 GB (PyTorch GPU + Ultralytics) | 已计入已使用 |
 | ROD 数据集   | 225.7 MB (raw; 4,000 图 + 4,000 标签) | 已计入已使用 |
 | WOTR 数据集  | 4.19 GB (raw; 13,928 图 + VOC) | 已计入已使用 |
 | processed    | 4.37 GB (YOLO; 17,908 图 + 标签) | 已计入已使用 |
 | preview      | 16.1 MB (Phase 12 可视化; 121 张) | 已计入已使用 |
+| smoke_test   | 126 MB (Phase 13 子集; 450+100 图) | 已计入已使用 |
 
 **阈值**: NORMAL ≥ 30 GB ｜ WARNING 15~30 GB ｜ DANGER < 15 GB
 
@@ -169,8 +170,18 @@
 - **提醒 (非阻断)**: WOTR 远景小目标占比高 (关注小目标召回); `plant_pot`/`bench` 长尾类极少; tricycle 2 个超大框建议训练前人工抽查 (低风险)。
 - **输出文档**: `docs/dataset_quality_report.md` (完整统计与结论)。
 
+### Phase 13 — 小规模 YOLO 训练验证 (已完成 ✅; 2026-09-02)
+- **性质**: smoke test — 少量数据 (450 train + 100 val, 含盲道 74+18), 10 epochs, 验证 数据读取/标签/模型/GPU/loss 下降/验证流程; **不追求精度, 不用全量**。
+- **工具**: 新增 `scripts/make_smoke_subset.py` (子集构建, 复制不动 raw/processed) 与 `scripts/run_smoke_train.py` (训练 + 指标记录 + 沙箱适配)。
+- **配置**: YOLOv8n (COCO 预训练, nc 80→26) ｜ imgsz=640 ｜ batch=16 ｜ **AMP on** ｜ 10 epochs ｜ seed=20260902。
+- **结果**: 总耗时 **103 s** (≈10 s/epoch) ｜ GPU 峰值 **1.93 GB** (无 OOM, 余量充足) ｜ loss 稳定下降 (box 1.62→1.45 / cls 4.64→2.16 / dfl 1.31→1.18) ｜ mAP50 0.0005→**0.303** / mAP50-95 **0.185** / P 0.497 / R 0.293 (仅流程验证值)。
+- **验证目标全部达成**: 数据 ✅ 标签 ✅ 模型 ✅ GPU (AMP checks passed) ✅ loss 下降 ✅ val 流程 ✅; 0 CUDA error / 0 OOM / exit 0。
+- **沙箱适配 (环境, 非模型)**: ① `YOLO_CONFIG_DIR` 重定向字体目录至工作区 (预置 Arial.ttf) + `MPLCONFIGDIR`; ② monkeypatch ultralytics `ThreadPool` (multiprocessing 命名管道被沙箱拒, 换纯线程池); ③ dataloader workers=0。
+- **产物**: `runs/smoke_test/yolov8n_smoke_b16/weights/{best,last}.pt` (6.2 MB) + results.csv ｜ `datasets/smoke_test/` (126 MB) ｜ `docs/training_smoke_test_stats.json`。
+- **输出文档**: `docs/training_smoke_test.md` (完整记录)。
+
 ### 下一步 (Next Steps)
-- **模型训练 (Phase 13 候选)**: 使用 `datasets/processed/data.yaml` 训练 YOLOv8n/v11n (detect), `imgsz=640`, `batch=16` (OOM 降 8), `epoch=100–200`, `amp=True`; 重点关注核心类 `blind_road` (1,723 图 / 2,381 实例, 仅占 1.21%) 的召回与 mAP; 评估长尾类 (437:1) 与 WOTR 小目标 (37%) 影响。
+- **全量正式训练 (Phase 14 候选)**: 使用 `datasets/processed/data.yaml` (17,908 图) 训练 YOLOv8n/v11n (detect), `imgsz=640`, `batch=16` (实测峰值 1.9 GB, 可按显存升 24–32), `epoch=100–200`, `amp=True`; 重点关注核心类 `blind_road` (1,723 图 / 2,381 实例, 仅占 1.21%) 的召回与 mAP; 评估长尾类 (437:1) 与 WOTR 小目标 (37%) 影响; smoke 权重 (mAP50 0.303) 可作 warm-start 参考。
 - 任何下载 / 解压 / 训练前, 必须调用 `check_before_operation()` 做闸门校验。
 - 持续监控: 定期运行 `python scripts/check_disk_space.py`, 状态低于 NORMAL 时按策略暂停或停止。
 

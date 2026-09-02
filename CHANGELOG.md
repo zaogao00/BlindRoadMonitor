@@ -2,6 +2,36 @@
 
 本项目所有重要变更记录于此。格式参考 Keep a Changelog。
 
+## [Phase 13] — 2026-09-02 (小规模 YOLO 训练验证 COMPLETE)
+
+### Added (新增)
+- **`scripts/make_smoke_subset.py`**: smoke 子集构建 (450 train + 100 val, 含 blind_road 优先; 复制输出, 不动 raw/processed)
+- **`scripts/run_smoke_train.py`**: smoke 训练运行器 (YOLOv8n + imgsz=640 + batch16 + AMP + 10 epochs; 记录时间/显存/loss/mAP; 含沙箱适配)
+- **`datasets/smoke_test/`**: 子集 (126 MB; train 450 含盲道 74 / val 100 含盲道 18)
+- **`runs/smoke_test/yolov8n_smoke_b16/weights/{best,last}.pt`**: 训练权重 (6.2 MB; mAP50 0.303)
+- **`docs/training_smoke_test.md`** + **`docs/training_smoke_test_stats.json`**: 验证报告与统计
+
+### Trained (训练结果 — 10 epochs / 103 s)
+- loss 正常下降: box 1.62→**1.45** / cls 4.64→**2.16** / dfl 1.31→**1.18**
+- 指标: mAP50 0.0005→**0.303** / mAP50-95 **0.185** / P **0.497** / R **0.293** (val 100 图; 仅流程验证值)
+- GPU: 峰值 **1.93 GB** (无 OOM, batch16 余量充足) ｜ AMP checks passed ｜ 0 CUDA error ｜ exit 0
+
+### Verified (验证目标 6/6)
+- 数据读取 ✅ / 标签 ✅ / 模型 ✅ (nc 80→26, 322/355 迁移) / GPU ✅ / loss 下降 ✅ / 验证流程 ✅
+
+### Fixed (沙箱适配 — 环境, 非模型问题)
+- **Arial.ttf 下载失败**: `YOLO_CONFIG_DIR` 重定向至工作区 `.yolo_config` + 预置系统字体; `MPLCONFIGDIR` 规避 matplotlib 缓存写入失败
+- **[WinError 5] 标签缓存扫描**: ultralytics `multiprocessing.pool.ThreadPool` 创建命名管道被沙箱拒绝 → monkeypatch 为 `concurrent.futures` 纯线程池 (仅缓存扫描, 不改训练)
+- **dataloader workers=0**: Windows spawn + 管道受限; 450 图单进程足够
+
+### Safety (安全约束落实)
+- 训练前 `check_before_operation(required_gb=5)` → NORMAL (73.8 GB), 允许
+- `datasets/raw/**` / `datasets/processed/**` 零改动 (smoke 子集为独立复制)
+- 磁盘: D 盘剩余 ~64.3 GB → NORMAL; 训练产物落入 `runs/` (gitignore 屏蔽)
+
+### Git
+- 提交: `Phase 13: training smoke test`
+
 ## [Phase 12] — 2026-09-02 (数据可视化质量检查 COMPLETE)
 
 ### Added (新增)
