@@ -38,3 +38,9 @@ Desktop.ini
 
 # 临时克隆 / 中间产物 (嵌套 whale-clone 等, 不入库)
 .tmp/
+
+# Ultralytics 运行期配置/字体缓存 (YOLO_CONFIG_DIR 重定向, Phase 13)
+.yolo_config/
+
+# AMP 检查等临时下载的权重目录 (Phase 13)
+weights/
