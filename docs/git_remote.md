@@ -1,6 +1,7 @@
 # Git 远程推送指南 (docs/git_remote.md)
 
-> 本文档记录本仓库到 GitHub 的**持久推送方式**（HTTPS + 凭据文件），所有细节公开可见，便于审查与撤销。
+> 本文档记录本仓库到 GitHub 的**持久推送方式**，所有细节公开可见，便于审查与撤销。
+> 更新: 2026-09-02（最终方案: **URL 内嵌凭据**——实测本环境唯一可靠方式）
 
 ## 1. 仓库信息
 
@@ -8,62 +9,52 @@
 |---|---|
 | 本地仓库 | `D:\BlindRoadMonitor` |
 | GitHub 远程 | `https://github.com/zaogao00/BlindRoadMonitor.git` |
-| 远程别名 | `origin` |
+| 远程别名 | `origin`（URL 已内嵌凭据, 见 §2） |
 | 分支 | `master` |
-| 建立时间 | 2026-09-02（首次推送 23 提交完整历史） |
+| 首次推送 | 2026-09-02（23 提交完整历史, 现已同步至最新） |
 
-## 2. 认证方式（持久）
+## 2. 认证方式（持久, 已生效）
 
-- **协议**: HTTPS（SSH 22 端口在本机沙箱不可达, 故不用 SSH）
-- **凭据文件**: `D:\BlindRoadMonitor\.credentials\github.txt`
-  - 内容仅一行: `https://zaogao00:<TOKEN>@github.com`（TOKEN 为 GitHub Personal Access Token, `ghp_` 开头）
-- **已被 `.gitignore` 屏蔽**（`.credentials/`）→ 凭据**不会**随项目推到 GitHub
-- 使用方式: git 通过 `credential.helper=store --file=...` 读取该文件完成认证
+- **方式**: HTTPS + **origin URL 内嵌 Personal Access Token (PAT)**
+- 当前 origin: `https://zaogao00:<TOKEN>@github.com/zaogao00/BlindRoadMonitor.git`
+- 存储位置: 仓库本地 `.git/config`（**不入 git 历史、不推到 GitHub**, 仅本机可见）
+- 查看: `git remote -v`（会显示 token, 仅本机）
+- **普通 `git push origin master` 即可直接推送**, 无需任何额外参数（已实测通过）
 
-## 3. 如何推送（两种方式）
+> 为何不用 credential store helper / SSH:
+> - SSH 22 端口在本机网络不可达;
+> - `credential.helper=store` 实测被 system 级 `manager` helper 抢占且沙箱内交互崩溃,
+>   无法可靠生效 → 改用 URL 内嵌（唯一验证成功的方式）。
 
-### 方式 A — 本机任意终端直接 push（推荐, helper 自动读凭据）
+## 3. 如何推送（每个 Phase 完成后）
+
 ```bash
 cd D:\BlindRoadMonitor
-git push origin master
-```
-> 前提: 已配置 helper（见 §5 一次性配置）；若未配置则用方式 B。
-
-### 方式 B — 显式指定凭据文件（无需配置, 沙箱/CI 也适用）
-```bash
-git -c credential.helper="store --file=D:\BlindRoadMonitor\.credentials\github.txt" push origin master
-```
-
-### 完整流程（新 Phase 完成后）
-```bash
 git add <改动文件>
 git commit -m "<Phase XX: 描述>"
-git push origin master        # 或方式 B
+git push origin master        # 已内嵌凭据, 直接可用
 ```
 
-## 4. 如何更新 TOKEN
+## 4. 如何更新 TOKEN（token 过期/轮换时）
 
-1. GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic) → 生成新 token（勾选 `repo`）
-2. 用文本编辑器打开 `D:\BlindRoadMonitor\.credentials\github.txt`
-3. 把 `ghp_旧值` 替换为 `ghp_新值`，保存
-4. 验证: `git -c credential.helper="store --file=D:\BlindRoadMonitor\.credentials\github.txt" ls-remote origin`
-
-## 5. 一次性配置（可选, 让普通 `git push` 自动生效）
-
-在仓库内执行（把凭据 helper 写入本地 git config, 仅本仓库生效）:
 ```bash
-git config credential.helper "store --file=D:/BlindRoadMonitor/.credentials/github.txt"
+# 查看当前 URL
+git remote -v
+# 替换为新 token (ghp_xxx)
+git remote set-url origin "https://zaogao00:<新TOKEN>@github.com/zaogao00/BlindRoadMonitor.git"
+# 验证
+git ls-remote origin
 ```
-> 未执行本步时, 直接 `git push` 会提示输入用户名/密码（沙箱内可能失败）, 用方式 B 即可。
 
-## 6. 如何撤销 / 停用
+## 5. 如何撤销 / 停用
 
-- **停用推送认证**: 删除 `D:\BlindRoadMonitor\.credentials\github.txt`（或改名）→ 此后 push 需重新认证
-- **彻底吊销 TOKEN**: GitHub 网站撤销该 PAT（即便本地文件仍在也失效）
-- 两者皆不影响已推送内容与本地仓库
+- **移除凭据**: `git remote set-url origin https://github.com/zaogao00/BlindRoadMonitor.git`（此后 push 需重新认证）
+- **吊销 TOKEN**: GitHub 网站撤销该 PAT（即使本地 URL 仍含旧 token 也会失效）
+- 两者都不影响已推送内容与本地仓库
 
-## 7. 安全注意
+## 6. 安全注意
 
-- 凭据文件含明文 TOKEN, 仅存本机 D 盘；已被 `.gitignore` 屏蔽, 确认用 `git status` 检查它不出现在未跟踪列表
-- 不要将该文件内容粘贴到任何聊天/日志/issue
-- 建议定期轮换 TOKEN（GitHub 推荐 90 天）
+- token 明文存在于 `.git/config`（本机 D 盘）; `.git/` 本身不入库, token 不会上传 GitHub
+- 请勿把 `git remote -v` 输出或 token 粘贴到聊天/issue/日志
+- 建议定期轮换 PAT（GitHub 推荐 90 天内）
+- 若仓库设为 public, 任何人克隆仅获得代码（无 `.git/config` 内 token）——安全

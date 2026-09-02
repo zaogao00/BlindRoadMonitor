@@ -45,5 +45,5 @@ Desktop.ini
 # AMP 检查等临时下载的权重目录 (Phase 13)
 weights/
 
-# GitHub 持久认证凭据 (含 TOKEN, 绝不入库; 详见 docs/git_remote.md)
+# GitHub 凭据 (防御: 若误建 .credentials 目录则不入库; 实际凭据内嵌于 .git/config, 见 docs/git_remote.md)
 .credentials/
