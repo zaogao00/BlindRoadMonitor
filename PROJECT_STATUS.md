@@ -3,8 +3,8 @@
 ## Phase 00 — 项目安全与磁盘管理初始化
 
 ### 当前状态 (Current Status)
-- **阶段**: Phase 00 / 02–09 已完成 ✅；**Phase 10 数据集分析 已完成 ✅**；**Phase 11 YOLO 数据集转换 已完成 ✅** (17,908 图 / 195,719 实例 / 26 类)；**Phase 12 可视化质量检查 已完成 ✅** (120 张全部正常)；**Phase 13 小规模训练验证 已完成 ✅** — YOLOv8n smoke test (450 图 / 10 epochs / 103 s / mAP50 0.303 / loss 正常下降 / 无 OOM)
-- **整体状态**: 训练管线验证通过, 磁盘状态 **NORMAL**, 可进入全量正式训练 (Phase 14 候选)。
+- **阶段**: Phase 00 / 02–09 已完成 ✅；**Phase 10 数据集分析 已完成 ✅**；**Phase 11 YOLO 数据集转换 已完成 ✅** (17,908 图 / 195,719 实例 / 26 类)；**Phase 12 可视化质量检查 已完成 ✅** (120 张全部正常)；**Phase 13 小规模训练验证 已完成 ✅** (YOLOv8n, 450 图 / 10 epochs / mAP50 0.303)；**Phase 14 训练结果分析 已完成 ✅** — 盲道类 mAP50 **0.662** (10 epochs), 数据/标签/收敛/GPU 四项判断全部正常, **可正式训练**
+- **整体状态**: 数据与训练管线验证通过, 磁盘状态 **NORMAL**, 可进入全量正式训练 (Phase 15 候选)。
 - **硬件**: NVIDIA RTX 5070 (8GB VRAM)
 - **项目根目录**: `D:\BlindRoadMonitor`
 
@@ -180,8 +180,19 @@
 - **产物**: `runs/smoke_test/yolov8n_smoke_b16/weights/{best,last}.pt` (6.2 MB) + results.csv ｜ `datasets/smoke_test/` (126 MB) ｜ `docs/training_smoke_test_stats.json`。
 - **输出文档**: `docs/training_smoke_test.md` (完整记录)。
 
+### Phase 14 — 小规模训练结果分析 (已完成 ✅; 2026-09-02)
+- **性质**: 分析 Phase 13 smoke test 结果 (results.csv 全 10 epochs + best.pt 详细 val 评估 + 混淆矩阵 + 预测样例); 判断 数据可训练性/标签正确性/模型收敛/GPU 稳定性。
+- **工具**: 新增 `scripts/analyze_smoke_results.py` (best.pt val 评估 + 每类指标 + plots 混淆矩阵/曲线 + 含盲道预测样例); 输出 `docs/training_analysis_stats.json` + `runs/smoke_test/analysis/` (混淆矩阵/PR 曲线/batch 对照/6 张预测样例)。
+- **loss**: train box 1.625→1.445 / cls 4.637→**2.164** (−53%) / dfl 1.314→1.178; val 同步下降, 无发散/过拟合迹象。
+- **指标 (val 100 图 / 984 实例)**: mAP50 0.0005→**0.303** (持续上升未饱和) / mAP50-95 0.184 / P 0.495 / R 0.284。
+- **⭐ 盲道类 (blind_road)**: mAP50 **0.662** / mAP50-95 **0.430** / P 0.637 / R 0.571 — 10 epochs 即有强信号 → **盲道标注正确可学习** (本项目最关键正向结论)。
+- **长尾类 (stairs/guard_rail/chair/bench R=0)**: val 100 图抽样样本不足所致 (全集仅 84–419 实例), **非标签错误**; 全量 val (3,702 图) 即可覆盖。
+- **四项判断**: 数据能训练 ✅ / 标签正确 ✅ / 模型正常收敛 ✅ / GPU 稳定 ✅ (0 error / 0 OOM) → **可正式训练**。
+- **正式训练建议** (详见 `docs/training_report.md` §5): yolov8n 起步 (可试 s) ｜ epochs 150–200 (early-stop 30–50) ｜ batch **32** (smoke 峰值仅 1.93 GB, 余量足; s 模型则 16–24) ｜ imgsz 640 ｜ 全量 17,908 图 ｜ 默认 aug + close_mosaic=10, 长尾考虑 cls 权重 ｜ smoke best.pt warm-start 可选 ｜ 预期 mAP50 0.55–0.70 (盲道 ≥0.75)。
+- **输出文档**: `docs/training_report.md` (完整分析 + 建议)。
+
 ### 下一步 (Next Steps)
-- **全量正式训练 (Phase 14 候选)**: 使用 `datasets/processed/data.yaml` (17,908 图) 训练 YOLOv8n/v11n (detect), `imgsz=640`, `batch=16` (实测峰值 1.9 GB, 可按显存升 24–32), `epoch=100–200`, `amp=True`; 重点关注核心类 `blind_road` (1,723 图 / 2,381 实例, 仅占 1.21%) 的召回与 mAP; 评估长尾类 (437:1) 与 WOTR 小目标 (37%) 影响; smoke 权重 (mAP50 0.303) 可作 warm-start 参考。
+- **全量正式训练 (Phase 15 候选)**: 按 `docs/training_report.md` §5 建议执行 — 使用 `datasets/processed/data.yaml` (17,908 图 / train 10,043), YOLOv8n (可 warm-start smoke best.pt), `imgsz=640`, `batch=32` (OOM 降 16), `epoch=150–200` + early-stop, `amp=True`, `close_mosaic=10`; 全程监控 `blind_road` 类 mAP50 (目标 ≥0.75) 与长尾类表现。
 - 任何下载 / 解压 / 训练前, 必须调用 `check_before_operation()` 做闸门校验。
 - 持续监控: 定期运行 `python scripts/check_disk_space.py`, 状态低于 NORMAL 时按策略暂停或停止。
 

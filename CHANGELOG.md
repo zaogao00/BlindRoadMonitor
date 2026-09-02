@@ -2,6 +2,31 @@
 
 本项目所有重要变更记录于此。格式参考 Keep a Changelog。
 
+## [Phase 14] — 2026-09-02 (小规模训练结果分析 COMPLETE)
+
+### Added (新增)
+- **`scripts/analyze_smoke_results.py`**: best.pt 详细评估 (每类 P/R/mAP) + plots (混淆矩阵/PR 曲线/batch 对照) + 含盲道预测样例生成
+- **`docs/training_report.md`**: 训练结果分析报告 (loss/指标/混淆/预测样例 + 四项判断 + 正式训练建议)
+- **`docs/training_analysis_stats.json`**: 每类指标统计 (可复现)
+- **`runs/smoke_test/analysis/`**: 混淆矩阵/曲线/预测样例图 (6 张含盲道推理图)
+
+### Analyzed (分析结果)
+- **loss**: train cls 4.637→**2.164** (−53%), box/dfl 单调下降; val 同步下降, 无发散/过拟合
+- **总体 (val)**: mAP50 0.0005→**0.303** (持续上升未饱和) / mAP50-95 0.184 / P 0.495 / R 0.284
+- **⭐ blind_road**: mAP50 **0.662** / mAP50-95 0.430 / P 0.637 / R 0.571 (10 epochs) → **盲道标注正确可学习**
+- **长尾类 R=0** (stairs/guard_rail/chair/bench): val 100 图抽样不足, 非标签错误 (全集仅 84–419 实例)
+- **四项判断**: 数据能训练 ✅ / 标签正确 ✅ / 模型收敛 ✅ / GPU 稳定 ✅ → **可正式训练**
+
+### Recommended (正式训练建议)
+- yolov8n 起步 (可试 s) ｜ epochs **150–200** + early-stop 30–50 ｜ batch **32** (smoke 峰值 1.93 GB) ｜ imgsz **640** ｜ 全量 **17,908 图** ｜ 默认 aug + `close_mosaic=10`, 长尾考虑 cls 权重 ｜ smoke best.pt warm-start 可选 ｜ 预期 mAP50 0.55–0.70 (盲道 ≥0.75)
+
+### Safety (安全约束落实)
+- 只读分析 (best.pt val/predict, 未改动数据与权重); plots 落入 `runs/` (gitignore 屏蔽)
+- 磁盘: D 盘剩余 ~64 GB → NORMAL
+
+### Git
+- 提交: `Phase 14: training analysis`
+
 ## [Phase 13] — 2026-09-02 (小规模 YOLO 训练验证 COMPLETE)
 
 ### Added (新增)
