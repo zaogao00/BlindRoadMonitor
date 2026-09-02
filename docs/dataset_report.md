@@ -109,3 +109,50 @@
 - ✅ 下载前执行磁盘闸门, 状态 NORMAL, 完成后 D 盘剩余 ~78.9 GB ≥ 30 GB。
 - ✅ 数据落入 `datasets/` (已被 `.gitignore` 屏蔽, 不入库)。
 - ✅ 脚本修复仅为适配本环境传输通道/阈值/限流, 未改变数据集内容与格式。
+
+---
+
+# Phase 11 — YOLO 数据集转换 (已完成 ✅, 2026-09-02)
+
+> 转换脚本: `scripts/convert_dataset.py` ｜ 自检脚本: `scripts/check_dataset.py` ｜ 执行日志: `docs/logs_phase11_convert.txt` / `docs/logs_phase11_check.txt` ｜ 报告: `docs/phase11_conversion_report.json` / `docs/phase11_check_report.json`
+> 原则落实: `datasets/raw/**` **严格只读**, 一个字节未改; 输出全新目录 `datasets/processed/`。
+
+## 11.1 任务类型决策
+
+- **detection**（非 segmentation）: 盲道类 `blind_road` 仅有 WOTR 的水平框, 无任何 mask/polygon 监督
+  (Phase 10 报告 §5.3 结论); ROD 的 786 条有效多边形标注在此统一退化为外接矩形。
+
+## 11.2 转换内容 (raw → processed)
+
+| 源数据集 | 处理 |
+|---|---|
+| WOTR (VOC) | XML stem ↔ JPEGImages stem 配对 (勿用 `<filename>`); bbox 归一化; 20 类映射到统一 26 类 |
+| ROD-Dataset (YOLO) | 5 列框直接保留; 多边形(786 条)取 min/max 转外接框; `Building`/`Road` 整行剔除(236 行); 25 类映射到统一 26 类 |
+| 全局去重 | MD5 去重 **20 张** (train 13 + val 7; WOTR 11 + ROD 9), 消除跨划分泄漏 |
+| 类名映射 | `electrical_box`→pole、`Bicycle Rack`→bicycle、`reflective_cone`→cone 等 15 组合并 |
+
+## 11.3 转换结果
+
+| Split | 图片 | 标签 | 实例 | 空标签 |
+|---|---|---|---|---|
+| train | 10,043 | 10,043 | 128,449 | 32 |
+| val | 3,702 | 3,702 | 32,142 | 50 |
+| test | 4,163 | 4,163 | 35,128 | 64 |
+| **合计** | **17,908** | **17,908** | **195,719** | 146 (背景负样本, 合法) |
+
+- 类别: **26 类** (核心 `blind_road` 2,381 实例全量保留)
+- 来源前缀: `wotr_` 13,917 + `rod_` 3,991
+- 占用: 4.366 GiB ｜ 输出: `datasets/processed/{images,labels}/{train,val,test}` + `data.yaml` (nc=26)
+- 自检 (`check_dataset.py`): **PASSED** — 0 损坏 / 0 零字节 / 0 孤立标签 / 0 格式错误行 / 0 类 ID 越界 / 0 跨划分重复
+
+## 11.4 关键数字核对 (与 Phase 10 预期一致)
+
+- 17908 = 17928 (raw 总数) − 20 (去重) ✅
+- 实例 195,719 = 196,067 (raw) − 236 (Building/Road) − 去重图实例 (~112) ✅
+- ROD 多边形: raw 923 条中 137 条属 Building/Road (被剔除), 有效 786 条全部转框 ✅
+
+## 11.5 磁盘
+
+- `datasets/raw/` 4.41 GiB + `datasets/processed/` 4.37 GiB ≈ 8.8 GiB (raw 保留只读, 不删除)
+- D 盘剩余: 转换前 ~69 GB (NORMAL) → 转换后 ~64 GB (NORMAL ≥ 30 GB, 未触发闸门报警)
+- `datasets/processed/` 已被 `.gitignore` 屏蔽 (仅放行 `data.yaml` 入库)

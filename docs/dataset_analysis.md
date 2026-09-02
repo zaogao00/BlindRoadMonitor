@@ -116,7 +116,7 @@
 ### 5.2 建议训练形态（第一阶段）
 
 - 任务：**目标检测**（`yolov8n.pt` / `yolo11n.pt`，非 `-seg`）
-- 输入：统一 YOLO 目录 `datasets/yolo/{images,labels}/{train,val,test}` + 统一 `data.yaml`（26 类）
+- 输入：统一 YOLO 目录 `datasets/processed/{images,labels}/{train,val,test}` + 统一 `data.yaml`（26 类）
 - 分辨率：`imgsz=640`；显存 8GB 下 `batch=16`，OOM 时降到 8 并开 `amp=True`
 
 ### 5.3 分割任务的后续路径（不在本阶段）
@@ -230,9 +230,10 @@ person↔Person ｜ pole↔Electrical Pole ｜ car↔Car ｜ tree↔Tree ｜ mot
 
 ---
 
-## 8. 需要的转换（Phase 11 执行清单，本阶段**不执行**）
+## 8. 需要的转换（Phase 11 执行清单 — 已执行 ✅，2026-09-02）
 
-> 所有转换输出到**新目录** `datasets/yolo/`，**只读** `datasets/raw/**`，原始文件一个字节都不改。
+> 所有转换输出到**新目录** `datasets/processed/`（实际执行目录；首版此节曾写 `datasets/yolo/`，以本版为准），**只读** `datasets/raw/**`，原始文件一个字节都不改。
+> 执行结果详见 `docs/phase11_conversion_report.json`（17908 图 / 195719 实例 / 26 类，detect）与 `docs/phase11_check_report.json`（PASSED）。
 
 1. **WOTR VOC → YOLO**
    - 按 **XML stem ↔ JPEGImages stem** 配对（**绝不能用 XML 内 `<filename>`**，13,926/13,928 不一致）
@@ -245,7 +246,7 @@ person↔Person ｜ pole↔Electrical Pole ｜ car↔Car ｜ tree↔Tree ｜ mot
    - WOTR 沿用 ImageSets（train/val/test）；ROD 沿用目录划分
    - 按 MD5 全局去重：保留 val/test 副本，剔除 train 中的重复项
    - 两数据集**按划分合并**到同一 `{train,val,test}`（不重叠、不交叉）
-4. **生成统一 `data.yaml`**：`nc=26`，`names=[…]`，`path=datasets/yolo`，`train/val/test` 指向 `images/{split}`
+4. **生成统一 `data.yaml`**：`nc=26`，`names=[…]`，`path=datasets/processed`，`train/val/test` 指向 `images/{split}`
 5. **转换后自检**：重跑同类统计脚本，校验 图片数 = 标签数、类 ID ∈ [0,25]、坐标 ∈ [0,1]、空标签清单、每类实例数与本报告一致（±剔除与去重量）
 
 ---

@@ -2,6 +2,37 @@
 
 本项目所有重要变更记录于此。格式参考 Keep a Changelog。
 
+## [Phase 11] — 2026-09-02 (YOLO 数据集转换 COMPLETE)
+
+### Added (新增)
+- **`scripts/convert_dataset.py`**: raw → processed 转换器 (VOC/YOLO 双解析 + 26 类映射 + Building/Road 按行剔除 + 全局 MD5 去重 + data.yaml 生成 + `--dry-run`/`--force`)
+- **`scripts/check_dataset.py`**: 转换后自检 (目录结构 / 配对 / PIL 完整性 / 格式 / 类 ID / 坐标 / 泄漏 / 空标签 / data.yaml 一致性)
+- **`datasets/processed/`**: 统一 YOLO detection 数据集 (17,908 图 / 195,719 实例 / 26 类; train 10,043 / val 3,702 / test 4,163; 4.366 GiB) + `data.yaml` (`nc=26`, 绝对路径, 入库)
+- 报告与日志: `docs/phase11_conversion_report.json` / `docs/phase11_check_report.json` / `docs/logs_phase11_convert.txt` / `docs/logs_phase11_check.txt`
+
+### Converted (转换内容)
+- **WOTR** (VOC, 20 类): XML stem ↔ 图片 stem 配对 (勿用 `<filename>`); bbox 归一化; 映射到统一 26 类
+- **ROD** (YOLO, 25 类): 5 列框直留; **786 条有效多边形转外接框** (raw 923 − 137 属 Building/Road); `Building`/`Road` 236 行整行剔除; 映射到统一 26 类 (electrical_box→pole、Bicycle Rack→bicycle 等)
+- **去重**: MD5 剔除 20 张 (train 13 + val 7; WOTR 11 + ROD 9) → 跨划分泄漏 0
+- **任务类型**: detect (盲道无 mask 监督; ROD 多边形退化为外接矩形)
+
+### Verified (自检 PASSED)
+- 图片=标签 100% (每划分) ｜ 损坏 0 / 零字节 0 / 孤立标签 0 / 格式错误行 0 / 类 ID 越界 0 / 坐标非法 0 / 跨划分重复 0
+- 核心类 `blind_road` 2,381 全量保留 (train 1,599 / val 372 / test 410); 来源前缀 wotr_ 13,917 + rod_ 3,991
+
+### Safety (安全约束落实)
+- `datasets/raw/**` **严格只读**, 一个字节未改; 未删除 raw
+- 转换前磁盘闸门 NORMAL; 完成后 D 盘剩余 ~64.5 GB (raw 4.41 + processed 4.37 ≈ 8.8 GB)
+- `datasets/processed/**` 被 `.gitignore` 屏蔽, 仅放行 `data.yaml` 入库; raw 的 `DATASET_INFO.md` 同步放行入库
+
+### Docs (文档同步)
+- `docs/dataset_report.md` 新增 §11 (转换结果/核对/磁盘)
+- `docs/dataset_analysis.md` §8 标注「已执行」, 输出目录统一为 `datasets/processed/`
+- `PROJECT_STATUS.md` 当前状态/磁盘表/Phase 11/下一步 更新
+
+### Git
+- 提交: `Phase 11: YOLO dataset conversion`
+
 ## [Phase 10] — 2026-09-02 (数据集结构与标签分析 COMPLETE)
 
 ### Added (新增)

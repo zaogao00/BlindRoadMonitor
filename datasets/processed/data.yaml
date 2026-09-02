@@ -1,0 +1,20 @@
+# Phase 11 — 统一 YOLO detection 数据集
+# 来源: WOTR (PASCAL-VOC, 20 类) + ROD-Dataset (YOLO 原生, 25 类)
+# 转换脚本: scripts/convert_dataset.py  (datasets/raw/** 严格只读)
+# 任务类型: detect — 盲道类无任何 mask/polygon 监督, 不做 segmentation
+# 类别: 26  (已丢弃 ROD 的 Building / Road 两个背景类)
+
+path: D:/BlindRoadMonitor/datasets/processed
+train: images/train
+val: images/val
+test: images/test
+
+nc: 26
+names: ['blind_road', 'person', 'pole', 'car', 'tree', 'motorcycle', 'warning_column', 'crosswalk', 'bicycle', 'green_light', 'red_light', 'roadblock', 'cone', 'truck', 'sign', 'trash_bin', 'bus', 'tricycle', 'fire_hydrant', 'dog', 'stairs', 'manhole', 'guard_rail', 'chair', 'bench', 'plant_pot']
+
+# 类别来源对照 (WOTR -> ROD):
+#   0  blind_road   <- WOTR blind_road                    [核心类]
+#   2  pole         <- WOTR pole | ROD 'Electrical Pole','Electrical Box'
+#   8  bicycle      <- WOTR bicycle | ROD 'Bike','Bicycle Rack'
+#   12 cone         <- WOTR reflective_cone | ROD 'Traffic Cone'
+#   15 trash_bin    <- WOTR ashcan | ROD 'Dustbin'

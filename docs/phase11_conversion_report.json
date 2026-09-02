@@ -1,0 +1,342 @@
+{
+  "task": "detect",
+  "n_classes": 26,
+  "classes": [
+    "blind_road",
+    "person",
+    "pole",
+    "car",
+    "tree",
+    "motorcycle",
+    "warning_column",
+    "crosswalk",
+    "bicycle",
+    "green_light",
+    "red_light",
+    "roadblock",
+    "cone",
+    "truck",
+    "sign",
+    "trash_bin",
+    "bus",
+    "tricycle",
+    "fire_hydrant",
+    "dog",
+    "stairs",
+    "manhole",
+    "guard_rail",
+    "chair",
+    "bench",
+    "plant_pot"
+  ],
+  "wotr": {
+    "scanned_images": 13928,
+    "scanned_objects": 189994,
+    "dropped_objects": 0,
+    "missing_xml": [],
+    "missing_image": [],
+    "unknown_classes": {}
+  },
+  "rod": {
+    "scanned_images": 4000,
+    "scanned_objects": 6073,
+    "dropped_objects": 236,
+    "polygons": 786,
+    "missing_label": [],
+    "unknown_classes": {}
+  },
+  "dedupe": {
+    "removed_images": 20,
+    "removed_by_split": {
+      "train": 13,
+      "val": 7
+    },
+    "removed_by_source": {
+      "wotr": 11,
+      "rod": 9
+    },
+    "removed_files": [
+      {
+        "source": "rod",
+        "split": "train",
+        "file": "IMG_00021.jpg"
+      },
+      {
+        "source": "rod",
+        "split": "train",
+        "file": "IMG_00217.jpg"
+      },
+      {
+        "source": "rod",
+        "split": "train",
+        "file": "IMG_06946.jpg"
+      },
+      {
+        "source": "rod",
+        "split": "train",
+        "file": "IMG_06981.jpg"
+      },
+      {
+        "source": "rod",
+        "split": "val",
+        "file": "IMG_22208.jpg"
+      },
+      {
+        "source": "rod",
+        "split": "val",
+        "file": "IMG_22255.jpg"
+      },
+      {
+        "source": "rod",
+        "split": "val",
+        "file": "IMG_22256.jpg"
+      },
+      {
+        "source": "rod",
+        "split": "val",
+        "file": "IMG_22310.jpg"
+      },
+      {
+        "source": "rod",
+        "split": "val",
+        "file": "IMG_22318.jpg"
+      },
+      {
+        "source": "wotr",
+        "split": "train",
+        "file": "10005592.jpg"
+      },
+      {
+        "source": "wotr",
+        "split": "train",
+        "file": "10007030.jpg"
+      },
+      {
+        "source": "wotr",
+        "split": "train",
+        "file": "10007343.jpg"
+      },
+      {
+        "source": "wotr",
+        "split": "train",
+        "file": "10007434.jpg"
+      },
+      {
+        "source": "wotr",
+        "split": "train",
+        "file": "10007453.jpg"
+      },
+      {
+        "source": "wotr",
+        "split": "train",
+        "file": "10007473.jpg"
+      },
+      {
+        "source": "wotr",
+        "split": "train",
+        "file": "10007690.jpg"
+      },
+      {
+        "source": "wotr",
+        "split": "train",
+        "file": "10008843.jpg"
+      },
+      {
+        "source": "wotr",
+        "split": "train",
+        "file": "10008847.jpg"
+      },
+      {
+        "source": "wotr",
+        "split": "val",
+        "file": "30007026.jpg"
+      },
+      {
+        "source": "wotr",
+        "split": "val",
+        "file": "30007123.jpg"
+      }
+    ]
+  },
+  "kept_images": 17908,
+  "out_per_split_images": {
+    "train": 10043,
+    "test": 4163,
+    "val": 3702
+  },
+  "out_per_split_objects": {
+    "train": 128449,
+    "test": 35128,
+    "val": 32142
+  },
+  "out_per_split_empty": {
+    "train": 32,
+    "val": 50,
+    "test": 64
+  },
+  "out_copied_bytes": 4687751495,
+  "out_class_instances": {
+    "blind_road": 2381,
+    "person": 36216,
+    "pole": 31305,
+    "car": 28395,
+    "tree": 22897,
+    "motorcycle": 12277,
+    "warning_column": 10424,
+    "crosswalk": 9033,
+    "bicycle": 6150,
+    "green_light": 4961,
+    "red_light": 4960,
+    "roadblock": 4460,
+    "cone": 4318,
+    "truck": 3660,
+    "sign": 3528,
+    "trash_bin": 2999,
+    "bus": 1928,
+    "tricycle": 1580,
+    "fire_hydrant": 1429,
+    "dog": 1108,
+    "stairs": 419,
+    "manhole": 502,
+    "guard_rail": 229,
+    "chair": 393,
+    "bench": 84,
+    "plant_pot": 83
+  },
+  "out_class_by_split": {
+    "blind_road": {
+      "train": 1599,
+      "test": 410,
+      "val": 372
+    },
+    "person": {
+      "train": 23591,
+      "test": 6419,
+      "val": 6206
+    },
+    "pole": {
+      "train": 21159,
+      "test": 5316,
+      "val": 4830
+    },
+    "car": {
+      "train": 18572,
+      "test": 5087,
+      "val": 4736
+    },
+    "tree": {
+      "train": 15716,
+      "test": 3817,
+      "val": 3364
+    },
+    "motorcycle": {
+      "train": 8114,
+      "test": 2242,
+      "val": 1921
+    },
+    "warning_column": {
+      "train": 7092,
+      "test": 1681,
+      "val": 1651
+    },
+    "crosswalk": {
+      "train": 5843,
+      "test": 1682,
+      "val": 1508
+    },
+    "bicycle": {
+      "train": 4041,
+      "test": 1077,
+      "val": 1032
+    },
+    "green_light": {
+      "train": 3265,
+      "test": 902,
+      "val": 794
+    },
+    "red_light": {
+      "train": 3241,
+      "test": 873,
+      "val": 846
+    },
+    "roadblock": {
+      "train": 3015,
+      "test": 747,
+      "val": 698
+    },
+    "cone": {
+      "train": 2578,
+      "test": 911,
+      "val": 829
+    },
+    "truck": {
+      "train": 2314,
+      "test": 700,
+      "val": 646
+    },
+    "sign": {
+      "train": 2221,
+      "test": 729,
+      "val": 578
+    },
+    "trash_bin": {
+      "train": 1917,
+      "test": 569,
+      "val": 513
+    },
+    "bus": {
+      "train": 1141,
+      "test": 413,
+      "val": 374
+    },
+    "tricycle": {
+      "train": 1025,
+      "test": 295,
+      "val": 260
+    },
+    "fire_hydrant": {
+      "train": 917,
+      "test": 271,
+      "val": 241
+    },
+    "dog": {
+      "train": 689,
+      "test": 223,
+      "val": 196
+    },
+    "stairs": {
+      "train": 62,
+      "val": 134,
+      "test": 223
+    },
+    "manhole": {
+      "train": 94,
+      "val": 166,
+      "test": 242
+    },
+    "guard_rail": {
+      "train": 101,
+      "val": 59,
+      "test": 69
+    },
+    "chair": {
+      "train": 66,
+      "val": 159,
+      "test": 168
+    },
+    "bench": {
+      "train": 40,
+      "val": 16,
+      "test": 28
+    },
+    "plant_pot": {
+      "train": 36,
+      "val": 13,
+      "test": 34
+    }
+  },
+  "dropped_classes": [
+    "Building",
+    "Road"
+  ]
+}

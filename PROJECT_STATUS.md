@@ -3,8 +3,8 @@
 ## Phase 00 — 项目安全与磁盘管理初始化
 
 ### 当前状态 (Current Status)
-- **阶段**: Phase 00 / 02 / 03 / 04 / 05 / 06 / 07 / 08 已完成 ✅；**Phase 09 已完成 ✅** — ROD-Dataset 第一轮 4,000 图 + 4,000 标签 (225.7 MB) 及 **WOTR 全量 13,928 图 + 13,928 VOC 标注 (4.19 GB)** 下载并校验通过
-- **整体状态**: 初始化就绪, 磁盘状态 **NORMAL**, 可安全进入后续 Phase。
+- **阶段**: Phase 00 / 02–09 已完成 ✅；**Phase 10 数据集分析 已完成 ✅**；**Phase 11 YOLO 数据集转换 已完成 ✅** — WOTR + ROD 合并转换为 **17,908 图 / 195,719 实例 / 26 类** YOLO detection 数据集 (`datasets/processed/`), 自检 PASSED
+- **整体状态**: 初始化就绪, 磁盘状态 **NORMAL**, 可安全进入后续 Phase (训练)。
 - **硬件**: NVIDIA RTX 5070 (8GB VRAM)
 - **项目根目录**: `D:\BlindRoadMonitor`
 
@@ -15,12 +15,13 @@
 | ------------ | --------------------- | ------ |
 | 监控盘符     | D:\                   | —      |
 | 总空间       | ~200 GB (沙箱视图)    | —      |
-| 已使用       | ~131 GB (65.5%)       | —      |
-| 剩余空间     | **~69 GB** (WOTR 解压后, zip 已删) | NORMAL (≥ 30 GB) |
-| 项目目录占用 | ~340 MB (含数据集元数据) | 可忽略 |
+| 已使用       | ~135.5 GB (67.7%)     | —      |
+| 剩余空间     | **~64.5 GB** (Phase 11 转换后) | NORMAL (≥ 30 GB) |
+| 项目目录占用 | ~8.8 GB (raw 4.41 + processed 4.37, 不含 venv) | 已计入已使用 |
 | venv 占用    | ~4.7 GB (PyTorch GPU + Ultralytics) | 已计入已使用 |
-| ROD 数据集   | 225.7 MB (4,000 图 + 4,000 标签) | 已计入已使用 |
-| WOTR 数据集  | 4.19 GB (解压; 13,928 图 + VOC, zip 已删) | 已计入已使用 |
+| ROD 数据集   | 225.7 MB (raw; 4,000 图 + 4,000 标签) | 已计入已使用 |
+| WOTR 数据集  | 4.19 GB (raw; 13,928 图 + VOC) | 已计入已使用 |
+| processed    | 4.37 GB (YOLO; 17,908 图 + 标签) | 已计入已使用 |
 
 **阈值**: NORMAL ≥ 30 GB ｜ WARNING 15~30 GB ｜ DANGER < 15 GB
 
@@ -146,9 +147,19 @@
 - **待处理风险**: ① 划分泄漏 **20 组重复 (15 组跨划分)** → 转换时保留 val/test、从 train 精确剔除 **13 张**副本; ② 长尾 437:1 (person 36,238 vs plant_pot 83); ③ WOTR 小目标 37% (640 分辨率下召回损失); ④ ROD License 记录不一致 (Phase 08 记 CC BY 4.0 / Phase 09 记 MIT, 均允许商用+署名, 不阻断)。
 - **输出文档**: `docs/dataset_analysis.md` (含 **§8 Phase 11 转换清单**)。
 
+### Phase 11 — YOLO 数据集转换 (已完成 ✅; 2026-09-02)
+- **性质**: `datasets/raw/**` **严格只读** (一个字节未改), 输出全新目录 `datasets/processed/`; **detection** 任务 (盲道类无任何 mask 监督, ROD 多边形退化为外接矩形)。
+- **工具**: 新增 `scripts/convert_dataset.py` (VOC/YOLO 双解析 + 26 类映射 + Building/Road 按行剔除 + 全局 MD5 去重 + 写 data.yaml) 与 `scripts/check_dataset.py` (转换后自检)。
+- **结果**: **17,908 图 / 195,719 实例 / 26 类** — train 10,043 / val 3,702 / test 4,163 (图片=标签 100%); 空标签 146 (背景负样本, 合法); `blind_road` 2,381 全量保留; 来源 `wotr_` 13,917 + `rod_` 3,991; 占用 4.366 GiB。
+- **去重**: MD5 剔除 20 张重复图 (train 13 + val 7; WOTR 11 + ROD 9), 跨划分泄漏清零。
+- **丢弃**: ROD `Building`(144) / `Road`(92) 共 236 行整行剔除 (其中 137 条为多边形行); 有效多边形 786 条全部转外接框。
+- **自检**: `check_dataset.py` → **PASSED** — 0 损坏 / 0 零字节 / 0 孤立标签 / 0 格式错误行 / 0 类 ID 越界 / 0 坐标非法 / 0 跨划分重复。
+- **输出**: `datasets/processed/{images,labels}/{train,val,test}` + `datasets/processed/data.yaml` (`nc=26`, 绝对路径) + `docs/phase11_conversion_report.json` / `docs/phase11_check_report.json` / `docs/logs_phase11_*.txt`。
+- **磁盘**: raw 4.41 + processed 4.37 ≈ 8.8 GB; 转换后 D 盘剩余 ~64.5 GB (**NORMAL** ≥ 30 GB, 未触发闸门报警)。
+- **文档**: `docs/dataset_report.md` §11, `docs/dataset_analysis.md` §8 已标注"已执行"并统一输出目录为 `datasets/processed/`。
+
 ### 下一步 (Next Steps)
-- **数据准备 (Phase 11 候选)**: 执行 `docs/dataset_analysis.md` §8 转换清单 — WOTR VOC→YOLO (**按 XML stem ↔ 图片 stem 配对**, 勿用 `<filename>`) + ROD 多边形→外接框 + 类名映射与 ID 重编号 + 按行剔除 Building/Road + 全局 MD5 去重 (保留 val/test、从 train 精确剔除 **13 张**副本) + 统一 `data.yaml` (`nc=26`); **输出到新目录 `datasets/yolo/`, 只读 `datasets/raw/**`**。
-  - 类别体系: 26 类 (核心 `blind_road`), WOTR 提供盲道+街景障碍, ROD 扩充街具类; GuideTWSI 仍 401 门控, 可选后续获取 (补盲道分割/样本)。
+- **模型训练 (Phase 12 候选)**: 使用 `datasets/processed/data.yaml` 训练 YOLOv8n/v11n (detect), `imgsz=640`, `batch=16` (OOM 降 8), `epoch=100–200`, `amp=True`; 重点关注核心类 `blind_road` (1,723 图 / 2,381 实例, 仅占 1.21%) 的召回与 mAP; 评估长尾类 (437:1) 与 WOTR 小目标 (37%) 影响。
 - 任何下载 / 解压 / 训练前, 必须调用 `check_before_operation()` 做闸门校验。
 - 持续监控: 定期运行 `python scripts/check_disk_space.py`, 状态低于 NORMAL 时按策略暂停或停止。
 
