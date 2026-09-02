@@ -46,15 +46,18 @@ BEST = r"D:\BlindRoadMonitor\runs\smoke_test\yolov8n_smoke_b16\weights\best.pt"
 YAML = r"D:\BlindRoadMonitor\datasets\smoke_test\data.yaml"
 OUT_DIR = r"D:\BlindRoadMonitor\runs\smoke_test\analysis"
 OUT_JSON = r"D:\BlindRoadMonitor\docs\training_analysis_stats.json"
+SMOKE_VAL = r"D:\BlindRoadMonitor\datasets\smoke_test\images\val"
 os.makedirs(OUT_DIR, exist_ok=True)
 
 m = YOLO(BEST)
 
 # 1) val 详细评估 (每类指标, plots=False 先取数字)
 val_res = m.val(data=YAML, imgsz=640, batch=16, device=0, plots=False, verbose=False, workers=0)
+# 真实评估图数 = val 图片目录文件数 (nt_per_image 实为 per-class 目标数, shape=(nc,), 不可作图数)
+n_val_images = len([f for f in os.listdir(SMOKE_VAL) if f.lower().endswith((".jpg", ".png"))])
 stats = {
     "val_total": {
-        "images": int(val_res.nt_per_image.shape[0]) if hasattr(val_res, "nt_per_image") else 100,
+        "images": n_val_images,
         "instances": int(val_res.nt_per_class.sum()) if hasattr(val_res, "nt_per_class") else None,
         "mAP50": round(float(val_res.box.map50), 4),
         "mAP50_95": round(float(val_res.box.map), 4),
@@ -73,6 +76,13 @@ for i, name in names.items():
             "mAP50": round(float(val_res.box.ap50[i]), 4),
             "mAP50_95": round(float(val_res.box.ap[i]), 4),
         }
+    except IndexError:
+        # val 中该类无真值 -> ultralytics 不为其建 AP 槽位 (ap 数组 < nc);
+        # 记 0 并标注原因 (非标签问题, 是抽样未覆盖长尾类)
+        stats["per_class"][name] = {
+            "P": 0.0, "R": 0.0, "mAP50": 0.0, "mAP50_95": 0.0,
+            "note": "val 中无该类目标 (抽样未覆盖); 全量 val 含该类时会有指标",
+        }
     except Exception as e:
         stats["per_class"][name] = {"err": str(e)}
 
@@ -82,7 +92,6 @@ m.val(data=YAML, imgsz=640, batch=16, device=0, plots=True, verbose=False, proje
 
 # 3) 预测样例: 找含 blind_road 的 val 图
 print("[2] 生成预测样例图...")
-SMOKE_VAL = r"D:\BlindRoadMonitor\datasets\smoke_test\images\val"
 blind_imgs = []
 for fn in sorted(os.listdir(SMOKE_VAL)):
     if not fn.endswith(".jpg"):

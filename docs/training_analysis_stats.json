@@ -1,6 +1,6 @@
 {
   "val_total": {
-    "images": 26,
+    "images": 100,
     "instances": 984,
     "mAP50": 0.3013,
     "mAP50_95": 0.1837,
@@ -159,7 +159,11 @@
       "mAP50_95": 0.0
     },
     "plant_pot": {
-      "err": "index 25 is out of bounds for axis 0 with size 25"
+      "P": 0.0,
+      "R": 0.0,
+      "mAP50": 0.0,
+      "mAP50_95": 0.0,
+      "note": "val 中无该类目标 (抽样未覆盖); 全量 val 含该类时会有指标"
     }
   },
   "prediction_samples": [

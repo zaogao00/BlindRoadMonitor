@@ -3,7 +3,7 @@
 ## Phase 00 — 项目安全与磁盘管理初始化
 
 ### 当前状态 (Current Status)
-- **阶段**: Phase 00 / 02–09 已完成 ✅；**Phase 10 数据集分析 已完成 ✅**；**Phase 11 YOLO 数据集转换 已完成 ✅** (17,908 图 / 195,719 实例 / 26 类)；**Phase 12 可视化质量检查 已完成 ✅** (120 张全部正常)；**Phase 13 小规模训练验证 已完成 ✅** (YOLOv8n, 450 图 / 10 epochs / mAP50 0.303)；**Phase 14 训练结果分析 已完成 ✅** — 盲道类 mAP50 **0.662** (10 epochs), 数据/标签/收敛/GPU 四项判断全部正常, **可正式训练**
+- **阶段**: Phase 00 / 02–09 已完成 ✅；**Phase 10 数据集分析 已完成 ✅**；**Phase 11 YOLO 数据集转换 已完成 ✅** (17,908 图 / 195,719 实例 / 26 类)；**Phase 12 可视化质量检查 已完成 ✅** (120 张全部正常)；**Phase 13 小规模训练验证 已完成 ✅** (YOLOv8n, 450 图 / 10 epochs / mAP50 0.301 复评)；**Phase 14 训练结果分析 已完成 ✅** — 盲道类 mAP50 **0.662** (10 epochs), 数据/标签/收敛/GPU 四项判断全部正常, **可正式训练**
 - **整体状态**: 数据与训练管线验证通过, 磁盘状态 **NORMAL**, 可进入全量正式训练 (Phase 15 候选)。
 - **硬件**: NVIDIA RTX 5070 (8GB VRAM)
 - **项目根目录**: `D:\BlindRoadMonitor`
@@ -174,7 +174,7 @@
 - **性质**: smoke test — 少量数据 (450 train + 100 val, 含盲道 74+18), 10 epochs, 验证 数据读取/标签/模型/GPU/loss 下降/验证流程; **不追求精度, 不用全量**。
 - **工具**: 新增 `scripts/make_smoke_subset.py` (子集构建, 复制不动 raw/processed) 与 `scripts/run_smoke_train.py` (训练 + 指标记录 + 沙箱适配)。
 - **配置**: YOLOv8n (COCO 预训练, nc 80→26) ｜ imgsz=640 ｜ batch=16 ｜ **AMP on** ｜ 10 epochs ｜ seed=20260902。
-- **结果**: 总耗时 **103 s** (≈10 s/epoch) ｜ GPU 峰值 **1.93 GB** (无 OOM, 余量充足) ｜ loss 稳定下降 (box 1.62→1.45 / cls 4.64→2.16 / dfl 1.31→1.18) ｜ mAP50 0.0005→**0.303** / mAP50-95 **0.185** / P 0.497 / R 0.293 (仅流程验证值)。
+- **结果**: 总耗时 **103 s** (≈10 s/epoch) ｜ GPU 峰值 **1.93 GB** (无 OOM, 余量充足) ｜ loss 稳定下降 (box 1.62→1.45 / cls 4.64→2.16 / dfl 1.31→1.18) ｜ mAP50 0.0005→**0.301** (best.pt 复评) / mAP50-95 **0.184** / P 0.495 / R 0.284 (仅流程验证值)。
 - **验证目标全部达成**: 数据 ✅ 标签 ✅ 模型 ✅ GPU (AMP checks passed) ✅ loss 下降 ✅ val 流程 ✅; 0 CUDA error / 0 OOM / exit 0。
 - **沙箱适配 (环境, 非模型)**: ① `YOLO_CONFIG_DIR` 重定向字体目录至工作区 (预置 Arial.ttf) + `MPLCONFIGDIR`; ② monkeypatch ultralytics `ThreadPool` (multiprocessing 命名管道被沙箱拒, 换纯线程池); ③ dataloader workers=0。
 - **产物**: `runs/smoke_test/yolov8n_smoke_b16/weights/{best,last}.pt` (6.2 MB) + results.csv ｜ `datasets/smoke_test/` (126 MB) ｜ `docs/training_smoke_test_stats.json`。
@@ -184,7 +184,7 @@
 - **性质**: 分析 Phase 13 smoke test 结果 (results.csv 全 10 epochs + best.pt 详细 val 评估 + 混淆矩阵 + 预测样例); 判断 数据可训练性/标签正确性/模型收敛/GPU 稳定性。
 - **工具**: 新增 `scripts/analyze_smoke_results.py` (best.pt val 评估 + 每类指标 + plots 混淆矩阵/曲线 + 含盲道预测样例); 输出 `docs/training_analysis_stats.json` + `runs/smoke_test/analysis/` (混淆矩阵/PR 曲线/batch 对照/6 张预测样例)。
 - **loss**: train box 1.625→1.445 / cls 4.637→**2.164** (−53%) / dfl 1.314→1.178; val 同步下降, 无发散/过拟合迹象。
-- **指标 (val 100 图 / 984 实例)**: mAP50 0.0005→**0.303** (持续上升未饱和) / mAP50-95 0.184 / P 0.495 / R 0.284。
+- **指标 (val 100 图 / 984 实例)**: mAP50 0.0005→**0.301** (best.pt 复评, 持续上升未饱和) / mAP50-95 0.184 / P 0.495 / R 0.284。
 - **⭐ 盲道类 (blind_road)**: mAP50 **0.662** / mAP50-95 **0.430** / P 0.637 / R 0.571 — 10 epochs 即有强信号 → **盲道标注正确可学习** (本项目最关键正向结论)。
 - **长尾类 (stairs/guard_rail/chair/bench R=0)**: val 100 图抽样样本不足所致 (全集仅 84–419 实例), **非标签错误**; 全量 val (3,702 图) 即可覆盖。
 - **四项判断**: 数据能训练 ✅ / 标签正确 ✅ / 模型正常收敛 ✅ / GPU 稳定 ✅ (0 error / 0 OOM) → **可正式训练**。

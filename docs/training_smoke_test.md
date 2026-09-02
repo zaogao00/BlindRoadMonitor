@@ -53,8 +53,11 @@
 | 8 | 1.479 | 2.235 | 1.193 | 0.273 | 0.176 | 0.519 | 0.274 |
 | 10 | **1.445** | **2.164** | **1.178** | **0.303** | **0.185** | **0.497** | **0.293** |
 
+> ⚠️ 口径说明: 上表为训练期逐 epoch 验证快照 (results.csv 原始值, 末 epoch mAP50 0.303);
+> **最终以 best.pt 独立复评为准: mAP50 0.301 / mAP50-95 0.184 / P 0.495 / R 0.284** (见 Phase 14 报告, 两者差异为复评与末 epoch 快照的正常偏差)。
+
 - **Loss 全程单调下降趋势** ✅ (验证"loss 正常下降")
-- mAP50 0.0005 → **0.303**、mAP50-95 0.185 (10 epochs / 450 图, 不追求精度, 仅证流程)
+- mAP50 0.0005 → **0.301** (best.pt 复评)、mAP50-95 0.184 (10 epochs / 450 图, 不追求精度, 仅证流程)
 - val 最终: box 1.511 / cls 2.241 / dfl 1.230
 
 ### 3.3 错误记录
@@ -68,7 +71,7 @@
 
 ## 4. 产物
 
-- `runs/smoke_test/yolov8n_smoke_b16/weights/best.pt` (6.2 MB) — best 权重 (mAP50 0.303)
+- `runs/smoke_test/yolov8n_smoke_b16/weights/best.pt` (6.2 MB) — best 权重 (复评 mAP50 0.301)
 - `runs/smoke_test/yolov8n_smoke_b16/weights/last.pt` (6.2 MB)
 - `runs/smoke_test/yolov8n_smoke_b16/results.csv` — 逐 epoch 全量指标
 
@@ -86,7 +89,7 @@
 
 - **Smoke test 全部通过**: 数据 / 标签 / 模型 / GPU / loss 下降 / 验证流程 均正常。
 - 无 CUDA OOM、无 CUDA error; batch=16 + imgsz=640 + AMP 在 RTX 5070 8GB 上**余量充足** (峰值 1.9 GB)。
-- 10 epochs / 450 图 / 103 秒 / mAP50 0.303 — 仅为流程验证数值, **不代表最终精度**。
+- 10 epochs / 450 图 / 103 秒 / mAP50 0.301 (best.pt 复评) — 仅为流程验证数值, **不代表最终精度**。
 - **下一步 (Phase 14 候选)**: 全量数据集 (17,908 图) 正式训练 — 可保持 batch 16 (或按显存升 24~32),
   epochs 100~200, 评估各 (尤其 `blind_road` 核心类) mAP; smoke 权重可作 warm-start 参考。
 

@@ -2,6 +2,20 @@
 
 本项目所有重要变更记录于此。格式参考 Keep a Changelog。
 
+## [Phase 14 修订] — 2026-09-02 (分析统计口径修正)
+
+### Fixed (修正 — 经 workbuddy 审查确认)
+- **JSON `images: 26` 取值 bug**: `analyze_smoke_results.py` 误用 `nt_per_image.shape[0]` (实为 per-class 目标数,
+  shape=(26,)=类别数) 作图数; 真实评估为 **100 张图**。改为统计 val 图片目录文件数 → JSON `images: 100`,
+  与报告/磁盘三者一致 (mAP 数值本身一直有效)。
+- **plant_pot 指标越界**: val 中该类无真值时 ultralytics 不建 AP 槽位 (`ap[25]` IndexError);
+  改为 IndexError 分支记 0.0 + note「val 无该类目标, 抽样未覆盖」, 每类表完整。
+- **mAP 口径统一**: 跨文档统一「最终 = best.pt 独立复评 **mAP50 0.301** / mAP50-95 0.184 / P 0.495 / R 0.284」;
+  逐 epoch 序列 (results.csv, 末 epoch 0.303) 保留为训练期快照并附口径说明 (training_smoke_test.md / training_report.md)。
+
+### Git
+- 提交: `Phase 14: fix analysis stats (images=100, plant_pot, mAP 0.301 unified)`
+
 ## [Phase 14] — 2026-09-02 (小规模训练结果分析 COMPLETE)
 
 ### Added (新增)
@@ -12,7 +26,7 @@
 
 ### Analyzed (分析结果)
 - **loss**: train cls 4.637→**2.164** (−53%), box/dfl 单调下降; val 同步下降, 无发散/过拟合
-- **总体 (val)**: mAP50 0.0005→**0.303** (持续上升未饱和) / mAP50-95 0.184 / P 0.495 / R 0.284
+- **总体 (val)**: mAP50 0.0005→**0.301** (best.pt 复评; 末 epoch 训练快照 0.303) / mAP50-95 0.184 / P 0.495 / R 0.284
 - **⭐ blind_road**: mAP50 **0.662** / mAP50-95 0.430 / P 0.637 / R 0.571 (10 epochs) → **盲道标注正确可学习**
 - **长尾类 R=0** (stairs/guard_rail/chair/bench): val 100 图抽样不足, 非标签错误 (全集仅 84–419 实例)
 - **四项判断**: 数据能训练 ✅ / 标签正确 ✅ / 模型收敛 ✅ / GPU 稳定 ✅ → **可正式训练**
@@ -33,12 +47,12 @@
 - **`scripts/make_smoke_subset.py`**: smoke 子集构建 (450 train + 100 val, 含 blind_road 优先; 复制输出, 不动 raw/processed)
 - **`scripts/run_smoke_train.py`**: smoke 训练运行器 (YOLOv8n + imgsz=640 + batch16 + AMP + 10 epochs; 记录时间/显存/loss/mAP; 含沙箱适配)
 - **`datasets/smoke_test/`**: 子集 (126 MB; train 450 含盲道 74 / val 100 含盲道 18)
-- **`runs/smoke_test/yolov8n_smoke_b16/weights/{best,last}.pt`**: 训练权重 (6.2 MB; mAP50 0.303)
+- **`runs/smoke_test/yolov8n_smoke_b16/weights/{best,last}.pt`**: 训练权重 (6.2 MB; 复评 mAP50 0.301)
 - **`docs/training_smoke_test.md`** + **`docs/training_smoke_test_stats.json`**: 验证报告与统计
 
 ### Trained (训练结果 — 10 epochs / 103 s)
 - loss 正常下降: box 1.62→**1.45** / cls 4.64→**2.16** / dfl 1.31→**1.18**
-- 指标: mAP50 0.0005→**0.303** / mAP50-95 **0.185** / P **0.497** / R **0.293** (val 100 图; 仅流程验证值)
+- 指标: mAP50 0.0005→**0.301** (best.pt 复评) / mAP50-95 **0.184** / P **0.495** / R **0.284** (val 100 图; 仅流程验证值)
 - GPU: 峰值 **1.93 GB** (无 OOM, batch16 余量充足) ｜ AMP checks passed ｜ 0 CUDA error ｜ exit 0
 
 ### Verified (验证目标 6/6)
