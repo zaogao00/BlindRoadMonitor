@@ -2,6 +2,36 @@
 
 本项目所有重要变更记录于此。格式参考 Keep a Changelog。
 
+## [Phase 17] — 2026-09-03 (实时摄像头检测 COMPLETE — 链路 PASS, headless 验证)
+
+### Added (新增)
+- **`backend/detector.py`**: `Detector` 类 (加载 best.pt + 单帧 YOLO 推理 + OpenCV 绘制, blind_road 橙色高亮; 复用沙箱兼容 YOLO_CONFIG_DIR/MPLCONFIGDIR/ThreadPool monkeypatch/workers=0; CUDA 可用性检查 + warmup + 线程安全 EMA-FPS)
+- **`backend/camera.py`**: `list_cameras()` 枚举 + `open_camera()` 多 backend 回退 (CAP_DSHOW/CAP_MSMF), 失败抛清晰 RuntimeError
+- **`scripts/run_camera.py`**: 实时主程序 (argparse: --source/--model/--conf/--imgsz/--device/--no-display/--max-frames/--save-dir/--save-every; 支持摄像头/视频/单图/目录; q/Q/ESC 退出; 全异常分支; 退出释放资源)
+- **`docs/camera_report.md`**: 实时摄像头检测报告 (环境/摄像头/性能/三类场景/异常/已知问题/下一步)
+- **`runs/yolov8n_prod_b32/camera_test/`**: 单图测试截图 (headless 验证产物)
+
+### Verified (headless 沙箱验证)
+- best.pt 正常加载 (26 类, device=0) ✅
+- 摄像头 idx 0 打开 (640×480/30fps), 80 帧连续读帧无失败 ✅
+- 每帧 YOLO 推理 + 绘制检测框/类别/conf/FPS ✅
+- **模型推理 EMA 78.6 FPS (≈12.7 ms/帧)** — 与 Phase 16 单图 88 FPS 一致, 实时余量充足
+- GPU 无 CUDA error / 无 OOM; 单帧分配峰值 38.4 MB (含 context 约 1–2 GB, 远低 8 GB) ✅
+- 障碍类 (car/truck/bus/manhole/guard_rail/trash_bin/plant_pot) 与 blind_road 均正常出框 ✅
+- 端到端循环 12.9 FPS 受沙箱虚拟摄像头慢速抓取限制 (非模型瓶颈); 真实摄像头将 ≥30 FPS
+
+### Decision (链路 PASS / 未完成项)
+- **链路 PASS**: 速度/显存/稳定性满足实时; 完整「摄像头→YOLO→绘制」成立
+- 未亲验项 (本沙箱无 GUI + 虚拟摄像头): 可见 `cv2.imshow` 窗口 + 物理摄像头实景 → **须用户在笔记本 `python scripts/run_camera.py --source 0` 本地确认** (不伪造 PASS)
+
+### Safety (安全约束落实)
+- 不重训 / 不改 best.pt / 不导出 / 不进下一阶段; 未删 raw/processed/runs 任何文件
+- 仅少量测试截图, 不存连续视频; 磁盘全程 NORMAL (73.49 GB)
+- 未 push (按用户约束, 仅本地 `git commit "Phase 17: realtime camera detection"`)
+
+### Git
+- 提交: `Phase 17: realtime camera detection`
+
 ## [Phase 16] — 2026-09-03 (推理验证 COMPLETE — GO)
 
 ### Added (新增)

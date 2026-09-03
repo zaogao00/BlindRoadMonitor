@@ -3,7 +3,7 @@
 ## Phase 00 — 项目安全与磁盘管理初始化
 
 ### 当前状态 (Current Status)
-- **阶段**: Phase 00 / 02–09 已完成 ✅；**Phase 10 数据集分析 已完成 ✅**；**Phase 11 YOLO 数据集转换 已完成 ✅** (17,908 图 / 195,719 实例 / 26 类)；**Phase 12 可视化质量检查 已完成 ✅** (120 张全部正常)；**Phase 13 小规模训练验证 已完成 ✅** (YOLOv8n, 450 图 / 10 epochs / mAP50 0.301 复评)；**Phase 14 训练结果分析 已完成 ✅** — 盲道类 mAP50 **0.662** (10 epochs), 四项判断正常；**Phase 15 全量正式训练 已完成 ✅** (YOLOv8n, 17,908 图 / 200 epochs / **test mAP50 0.776** / **盲道类 mAP50 0.849** ✅ 达成 ≥0.75)；**Phase 16 推理验证 已完成 ✅** (best.pt 复现 test mAP50 0.776 / 盲道 mAP50 0.849 / GPU 88 FPS / 显存 4.07 GB；判定 **GO** 进入 Phase 17)
+- **阶段**: Phase 00 / 02–09 已完成 ✅；**Phase 10 数据集分析 已完成 ✅**；**Phase 11 YOLO 数据集转换 已完成 ✅** (17,908 图 / 195,719 实例 / 26 类)；**Phase 12 可视化质量检查 已完成 ✅** (120 张全部正常)；**Phase 13 小规模训练验证 已完成 ✅** (YOLOv8n, 450 图 / 10 epochs / mAP50 0.301 复评)；**Phase 14 训练结果分析 已完成 ✅** — 盲道类 mAP50 **0.662** (10 epochs), 四项判断正常；**Phase 15 全量正式训练 已完成 ✅** (YOLOv8n, 17,908 图 / 200 epochs / **test mAP50 0.776** / **盲道类 mAP50 0.849** ✅ 达成 ≥0.75)；**Phase 16 推理验证 已完成 ✅** (best.pt 复现 test mAP50 0.776 / 盲道 mAP50 0.849 / GPU 88 FPS / 显存 4.07 GB；判定 **GO** 进入 Phase 17)；**Phase 17 实时摄像头检测 已完成 ✅** (headless 验证: best.pt 加载/摄像头打开/连续读帧/实时推理+绘制/模型推理 78.6 FPS/GPU 无错无 OOM；链路 PASS, 可见窗口与物理摄像头实景待用户本地确认)
 - **整体状态**: 数据与训练管线验证通过, 磁盘状态 **NORMAL**, 可进入全量正式训练 (Phase 15 候选)。
 - **硬件**: NVIDIA RTX 5070 (8GB VRAM)
 - **项目根目录**: `D:\BlindRoadMonitor`
@@ -219,11 +219,21 @@
 - **实施修复 (环境, 非模型)**: 列表源被 Ultralytics 整体载入导致 CUDA OOM → 改**分块预测 (CHUNK=128)**; 并修正预测框元组解包 (6 元组) 与 GT 画法 (2 元组) 两处脚本 bug。训练成果与权重未受影响。
 - **输出文档**: `docs/inference_report.md` (完整报告) + `docs/inference_stats.json`。
 
+### Phase 17 — 实时摄像头检测 (已完成 ✅; 2026-09-03, headless 验证)
+- **性质**: 验证「摄像头 → OpenCV → YOLO(best.pt) → 实时检测画面」整链路是否成立; **不重新训练 / 不改 best.pt / 不导出 / 不进下一阶段**。
+- **工具**: 新增 `backend/detector.py` (Detector: 加载 best.pt + 单帧推理 + OpenCV 绘制, 盲道橙色高亮; 复用沙箱兼容) / `backend/camera.py` (枚举+安全打开, 多 backend 回退) / `scripts/run_camera.py` (实时主循环, argparse, q/Q/ESC 退出, 全异常分支)。
+- **推理设置**: imgsz=640 / batch=1 / device=0 / workers=0 / best.pt / `--conf` 默认 0.25 (盲道可调低 0.15–0.20)。
+- **结果 (headless 沙箱)**: best.pt 正常加载 (26 类) / 摄像头 idx 0 打开 (640×480/30fps) / 80 帧连续读帧无失败 / 每帧 YOLO+绘制 / **模型推理 EMA 78.6 FPS** (≈12.7 ms/帧) / GPU 无 CUDA error / 无 OOM / 障碍类(car/truck/bus/manhole/guard_rail/trash_bin/plant_pot)与 blind_road 均正常出框。
+- **判定**: **链路 PASS** — 速度/显存/稳定性满足实时; 唯一未亲验项: 本沙箱无 GUI 故可见窗口未渲染、且暴露摄像头为虚拟设备非物理摄像头 → **须在用户笔记本运行 `python scripts/run_camera.py --source 0` 本地确认可见窗口与实景** (代码已就绪, 不伪造 PASS)。
+- **产物**: `runs/yolov8n_prod_b32/camera_test/` (单图测试截图) + `docs/camera_report.md` (完整报告)。
+- **实施修复 (环境, 非模型)**: 无 (直接复用 Phase 13/15/16 沙箱兼容, 未重新发明)。
+- **输出文档**: `docs/camera_report.md` (完整报告)。
+
 ### 下一步 (Next Steps)
-- **Phase 17 候选 — 摄像头实时检测**: 优先做轻量摄像头冒烟测试 (cv2.VideoCapture + YOLOv8 推理 + 出框, 验证实时延迟), 再做完整产品; 给盲人用的系统需音频/TTS 提醒而非画面叠加; 对 blind_road 降低告警阈值。
+- **Phase 18 候选 — 摄像头告警/语音(TTS)**: 给盲人用的系统画面叠加无效, 需音频提醒; 对 blind_road 低置信阈值 + 告警降级; 长尾弱类暂不作高可信事件 (Phase 17 已完成链路验证, 见上)。
 - **长尾优化 (可选)**: truck / guard_rail / bicycle / bus / dog / plant_pot mAP50 偏低 (与 437:1 长尾分布一致, 非标签错误) → 过采样 / 类别权重 / 补充数据源。
 - **更大模型 (可选)**: YOLOv8s (batch 16–24, 8GB 仍可) 追求更高精度。
-- **部署 (可选)**: 仅当部署端需要时导出 ONNX / TensorRT(INT8), Phase 16 按约束未导出。
+- **部署 (可选)**: 仅当部署端需要时导出 ONNX / TensorRT(INT8), Phase 16/17 按约束未导出。
 - 任何下载 / 解压 / 训练前, 必须调用 `check_before_operation()` 做闸门校验。
 - 持续监控: 定期运行 `python scripts/check_disk_space.py`, 状态低于 NORMAL 时按策略暂停或停止。
 
