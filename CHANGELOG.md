@@ -2,6 +2,32 @@
 
 本项目所有重要变更记录于此。格式参考 Keep a Changelog。
 
+## [Phase 16] — 2026-09-03 (推理验证 COMPLETE — GO)
+
+### Added (新增)
+- **`scripts/run_inference.py`**: 推理验证运行器 (best.pt 指标复现 + 逐图预测匹配 + 七类可视化 A~G + GT-vs-Pred 对照 + GPU/CPU 性能基准; 复用沙箱适配, workers=0; 默认 best.pt, 支持 `--source/--output/--cpu`)
+- **`docs/inference_report.md`**: 推理验证报告 (模型/数据/指标复现/定性/失败模式/性能/Go-No-Go 七节)
+- **`docs/inference_stats.json`**: 复现统计 (test 整体+每类 P/R/mAP + Phase15 对照 + 漏检/误检计数 + 性能 + 磁盘, 可复现)
+- **`runs/yolov8n_prod_b32/inference/`**: 12 张随机样本 + 72 张 GT-vs-Pred 对照
+
+### Verified (指标复现 — test 4,163 图 / 35,128 实例)
+- **mAP50 0.7765 / mAP50-95 0.5197 / P 0.8218 / R 0.7037** — 与 Phase 15 **完全一致 (diff=0.0)**
+- ⭐ **blind_road mAP50 0.8486 / R 0.8024** — 完全复现 (Phase 15 目标 ≥0.75 ✅)
+- 盲道漏检 104 图 (2.5%) / 803 实例 (≈20%); 误检 63 图; 长尾弱类 truck 0.538 / bus 0.610 / bicycle 0.652
+
+### Performance (RTX 5070)
+- 单图推理 **11.34 ms → 88.19 FPS** ｜ batch=32 吞吐 ≈640 图/秒 ｜ **峰值显存 4075 MB (4.07/7.96 GB)**
+- CPU 单图 29.14 ms → 34.31 FPS ｜ 模型 **6.27 MB**
+
+### Decision (Go / No-Go)
+- **GO** — 七项标准全满足 (可加载 / 指标复现 / blind_road 无异常 / 无系统性漏检 / 速度足以实时 / 模型文件正常 / 摄像头部署无技术阻碍)
+- 建议 Phase 17 对 blind_road 采用低置信阈值 + 告警降级; 长尾类暂不作为高可信事件
+
+### Fixed (环境修复, 非模型)
+- 列表源被 Ultralytics 整体载入 → CUDA OOM: 改**分块预测 (CHUNK=128)**
+- 预测框 6 元组解包 / GT 2 元组画法两处脚本 bug 修正
+
+
 ## [Phase 15] — 2026-09-03 (全量正式训练 COMPLETE)
 
 ### Added (新增)

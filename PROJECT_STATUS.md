@@ -3,7 +3,7 @@
 ## Phase 00 — 项目安全与磁盘管理初始化
 
 ### 当前状态 (Current Status)
-- **阶段**: Phase 00 / 02–09 已完成 ✅；**Phase 10 数据集分析 已完成 ✅**；**Phase 11 YOLO 数据集转换 已完成 ✅** (17,908 图 / 195,719 实例 / 26 类)；**Phase 12 可视化质量检查 已完成 ✅** (120 张全部正常)；**Phase 13 小规模训练验证 已完成 ✅** (YOLOv8n, 450 图 / 10 epochs / mAP50 0.301 复评)；**Phase 14 训练结果分析 已完成 ✅** — 盲道类 mAP50 **0.662** (10 epochs), 四项判断正常；**Phase 15 全量正式训练 已完成 ✅** (YOLOv8n, 17,908 图 / 200 epochs / **test mAP50 0.776** / **盲道类 mAP50 0.849** ✅ 达成 ≥0.75)
+- **阶段**: Phase 00 / 02–09 已完成 ✅；**Phase 10 数据集分析 已完成 ✅**；**Phase 11 YOLO 数据集转换 已完成 ✅** (17,908 图 / 195,719 实例 / 26 类)；**Phase 12 可视化质量检查 已完成 ✅** (120 张全部正常)；**Phase 13 小规模训练验证 已完成 ✅** (YOLOv8n, 450 图 / 10 epochs / mAP50 0.301 复评)；**Phase 14 训练结果分析 已完成 ✅** — 盲道类 mAP50 **0.662** (10 epochs), 四项判断正常；**Phase 15 全量正式训练 已完成 ✅** (YOLOv8n, 17,908 图 / 200 epochs / **test mAP50 0.776** / **盲道类 mAP50 0.849** ✅ 达成 ≥0.75)；**Phase 16 推理验证 已完成 ✅** (best.pt 复现 test mAP50 0.776 / 盲道 mAP50 0.849 / GPU 88 FPS / 显存 4.07 GB；判定 **GO** 进入 Phase 17)
 - **整体状态**: 数据与训练管线验证通过, 磁盘状态 **NORMAL**, 可进入全量正式训练 (Phase 15 候选)。
 - **硬件**: NVIDIA RTX 5070 (8GB VRAM)
 - **项目根目录**: `D:\BlindRoadMonitor`
@@ -206,11 +206,24 @@
 - **实施修复 (环境, 非模型)**: 收尾脚本将 `trainer.save_dir` (Path) 直接塞入 `json.dump` 抛 TypeError 致进程非零退出 → 已用 `str()` 包裹修复, 并以 `finalize_phase15.py` 补产统计 (训练成果本身 100% 有效)。
 - **输出文档**: `docs/final_training_report.md` (完整报告) + `docs/final_training_stats.json`。
 
+### Phase 16 — 推理验证 (已完成 ✅; 2026-09-03)
+- **性质**: 验证 Phase 15 的 `best.pt` 在真实推理阶段是否可靠, 为摄像头实时检测 (Phase 17) 与网页部署提供依据; **不修改模型 / 不重新训练 / 不修改数据集 / 不覆盖旧实验 / 不导出部署模型**。
+- **工具**: 新增 `scripts/run_inference.py` (指标复现 + 逐图预测匹配 + 七类可视化 + GT-vs-Pred 对照 + GPU/CPU 性能基准; 复用沙箱适配, 默认 best.pt, 支持指定图片/目录/输出目录)。
+- **路径确认 (Step 1)**: 实际 `best.pt = runs/yolov8n_prod_b32/weights/best.pt`、`data.yaml = datasets/processed/data.yaml`, 与项目记录一致, 未猜测、未改路径。
+- **指标复现 (test 4,163 图 / 35,128 实例)**: **mAP50 0.7765 / mAP50-95 0.5197 / P 0.8218 / R 0.7037** — 与 Phase 15 **完全一致 (diff=0.0)**; ⭐ **blind_road mAP50 0.8486 (R=0.8024)** 完全复现。
+- **失败模式 (盲道)**: 104/4,163 图 (2.5%) 含 blind_road 漏检, 803 实例漏检 (约 20%); 63 图含 blind_road 误检; 漏检多因远距/小段/遮挡/阴影低对比, 误检多为砖纹/车道线/路面纹理误判。
+- **长尾弱类**: truck mAP50 0.538 (R=0.447, 最差) / bus 0.610 / bicycle 0.652 / plant_pot 0.702 / guard_rail 0.703 (与 437:1 长尾分布一致, 非标签错误); 易混淆主要为 pole↔guard_rail↔tree, 红/绿灯区分良好 (green 0.95 / red 0.88)。
+- **性能 (RTX 5070)**: 单图推理 **11.34 ms → 88.19 FPS**, batch=32 吞吐 ≈640 图/秒, **峰值显存 4075 MB (4.07/7.96 GB)**; CPU 单图 29.14 ms → 34.31 FPS; 模型 **6.27 MB**。
+- **Go/No-Go**: **GO** — 七项标准全满足 (模型可加载 / 指标复现 / blind_road 无异常 / 无系统性漏检 / 速度足以实时 / 模型文件正常 / 摄像头部署无技术阻碍); 建议 Phase 17 对 blind_road 采用低置信阈值 + 告警降级, 长尾类暂不作为高可信事件。
+- **产物**: `runs/yolov8n_prod_b32/inference/` (12 随机 + 72 张 GT-vs-Pred 对照) + `docs/inference_stats.json` (入库); `docs/inference_report.md` (完整报告)。
+- **实施修复 (环境, 非模型)**: 列表源被 Ultralytics 整体载入导致 CUDA OOM → 改**分块预测 (CHUNK=128)**; 并修正预测框元组解包 (6 元组) 与 GT 画法 (2 元组) 两处脚本 bug。训练成果与权重未受影响。
+- **输出文档**: `docs/inference_report.md` (完整报告) + `docs/inference_stats.json`。
+
 ### 下一步 (Next Steps)
-- **Phase 16 候选 — 推理验证**: 用 `runs/yolov8n_prod_b32/weights/best.pt` 跑真实盲道场景图, 确认部署侧检测行为 (盲道 + 障碍物预警)。
+- **Phase 17 候选 — 摄像头实时检测**: 优先做轻量摄像头冒烟测试 (cv2.VideoCapture + YOLOv8 推理 + 出框, 验证实时延迟), 再做完整产品; 给盲人用的系统需音频/TTS 提醒而非画面叠加; 对 blind_road 降低告警阈值。
 - **长尾优化 (可选)**: truck / guard_rail / bicycle / bus / dog / plant_pot mAP50 偏低 (与 437:1 长尾分布一致, 非标签错误) → 过采样 / 类别权重 / 补充数据源。
 - **更大模型 (可选)**: YOLOv8s (batch 16–24, 8GB 仍可) 追求更高精度。
-- **部署 (可选)**: 导出 ONNX / TensorRT(INT8) 供边缘端预警系统。
+- **部署 (可选)**: 仅当部署端需要时导出 ONNX / TensorRT(INT8), Phase 16 按约束未导出。
 - 任何下载 / 解压 / 训练前, 必须调用 `check_before_operation()` 做闸门校验。
 - 持续监控: 定期运行 `python scripts/check_disk_space.py`, 状态低于 NORMAL 时按策略暂停或停止。
 

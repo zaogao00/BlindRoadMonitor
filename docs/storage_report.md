@@ -57,6 +57,14 @@
 - **总占用现状**: raw 4.41 + processed 4.37 + smoke 126 MB + **prod_b32 ~150 MB** ≈ 9.06 GB (数据集本体 WOTR 4.19 GB / ROD 225.7 MB 另计); D 盘全程 NORMAL, 余量充足。
 - **未触发任何下载/解压/删除**: 训练纯本地 (数据已就绪), 未出网, 未触碰系统 CUDA / 任何用户文件。
 
+### 2.3 Phase 16 更新 (推理验证 — 2026-09-03)
+
+- **推理产物**: `runs/yolov8n_prod_b32/inference/` 新增 12 张随机样本 + 72 张 GT-vs-Pred 对照 PNG, 合计约 **15 MB** (均被 `.gitignore` 屏蔽, 不入库)。
+- **磁盘闸门**: 推理运行前/后均经 `disk_manager` 实测, 结束 `free=73.5GB status=NORMAL`, 全程未低于 15 GB, 未触发安全停止。
+- **GPU 显存峰值**: **4075 MB (4.07 / 7.96 GB)**, 远低于 8 GB, 无 OOM (分块预测后稳定); 推理纯本地, 未出网。
+- **总占用现状**: raw 4.41 + processed 4.37 + smoke 126 MB + prod_b32 ~165 MB (训练+推理) ≈ 9.2 GB (WOTR/ROD 本体另计); D 盘全程 NORMAL, 余量充足。
+- **未修改模型/数据/旧实验**: best.pt 与 Phase 15 训练产物原样保留; inference/ 为新增子目录, 未覆盖; 未触碰系统 CUDA / 任何用户文件。
+
 ---
 
 ## 3. 项目目录结构 (Project Layout)

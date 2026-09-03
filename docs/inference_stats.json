@@ -1,0 +1,433 @@
+{
+  "phase": "Phase 16 Inference Validation",
+  "model_path": "D:\\BlindRoadMonitor\\runs\\yolov8n_prod_b32\\weights\\best.pt",
+  "model_size_mb": 6.27,
+  "data": "D:\\BlindRoadMonitor\\datasets\\processed\\data.yaml",
+  "split": "test",
+  "imgsz": 640,
+  "conf_threshold": 0.25,
+  "test_reproduced": {
+    "images": 0,
+    "mAP50": 0.7765,
+    "mAP50_95": 0.5197,
+    "precision": 0.8218,
+    "recall": 0.7037
+  },
+  "test_per_class": {
+    "blind_road": {
+      "P": 0.8579,
+      "R": 0.8024,
+      "mAP50": 0.8486,
+      "mAP50_95": 0.65
+    },
+    "person": {
+      "P": 0.8298,
+      "R": 0.6559,
+      "mAP50": 0.7534,
+      "mAP50_95": 0.4408
+    },
+    "pole": {
+      "P": 0.7544,
+      "R": 0.7867,
+      "mAP50": 0.8227,
+      "mAP50_95": 0.4832
+    },
+    "car": {
+      "P": 0.8066,
+      "R": 0.7001,
+      "mAP50": 0.7717,
+      "mAP50_95": 0.5128
+    },
+    "tree": {
+      "P": 0.7187,
+      "R": 0.7637,
+      "mAP50": 0.7965,
+      "mAP50_95": 0.4239
+    },
+    "motorcycle": {
+      "P": 0.801,
+      "R": 0.6798,
+      "mAP50": 0.762,
+      "mAP50_95": 0.4569
+    },
+    "warning_column": {
+      "P": 0.8356,
+      "R": 0.768,
+      "mAP50": 0.8295,
+      "mAP50_95": 0.4477
+    },
+    "crosswalk": {
+      "P": 0.9061,
+      "R": 0.8466,
+      "mAP50": 0.8968,
+      "mAP50_95": 0.7132
+    },
+    "bicycle": {
+      "P": 0.7817,
+      "R": 0.5319,
+      "mAP50": 0.6522,
+      "mAP50_95": 0.3697
+    },
+    "green_light": {
+      "P": 0.8977,
+      "R": 0.9146,
+      "mAP50": 0.9525,
+      "mAP50_95": 0.5846
+    },
+    "red_light": {
+      "P": 0.8344,
+      "R": 0.8511,
+      "mAP50": 0.8805,
+      "mAP50_95": 0.5319
+    },
+    "roadblock": {
+      "P": 0.8907,
+      "R": 0.7229,
+      "mAP50": 0.8141,
+      "mAP50_95": 0.5879
+    },
+    "cone": {
+      "P": 0.8625,
+      "R": 0.6696,
+      "mAP50": 0.7684,
+      "mAP50_95": 0.5013
+    },
+    "truck": {
+      "P": 0.684,
+      "R": 0.4471,
+      "mAP50": 0.5382,
+      "mAP50_95": 0.3758
+    },
+    "sign": {
+      "P": 0.8324,
+      "R": 0.6804,
+      "mAP50": 0.7515,
+      "mAP50_95": 0.5139
+    },
+    "trash_bin": {
+      "P": 0.8195,
+      "R": 0.7381,
+      "mAP50": 0.7915,
+      "mAP50_95": 0.6175
+    },
+    "bus": {
+      "P": 0.8334,
+      "R": 0.4844,
+      "mAP50": 0.6096,
+      "mAP50_95": 0.4293
+    },
+    "tricycle": {
+      "P": 0.8755,
+      "R": 0.6847,
+      "mAP50": 0.7691,
+      "mAP50_95": 0.6121
+    },
+    "fire_hydrant": {
+      "P": 0.8628,
+      "R": 0.6963,
+      "mAP50": 0.798,
+      "mAP50_95": 0.5767
+    },
+    "dog": {
+      "P": 0.7371,
+      "R": 0.6188,
+      "mAP50": 0.6701,
+      "mAP50_95": 0.4362
+    },
+    "stairs": {
+      "P": 0.8153,
+      "R": 0.6682,
+      "mAP50": 0.7608,
+      "mAP50_95": 0.5204
+    },
+    "manhole": {
+      "P": 0.9081,
+      "R": 0.7975,
+      "mAP50": 0.8721,
+      "mAP50_95": 0.6979
+    },
+    "guard_rail": {
+      "P": 0.7934,
+      "R": 0.6812,
+      "mAP50": 0.7034,
+      "mAP50_95": 0.4247
+    },
+    "chair": {
+      "P": 0.7517,
+      "R": 0.7029,
+      "mAP50": 0.7624,
+      "mAP50_95": 0.5352
+    },
+    "bench": {
+      "P": 0.7738,
+      "R": 0.8551,
+      "mAP50": 0.9105,
+      "mAP50_95": 0.6027
+    },
+    "plant_pot": {
+      "P": 0.9031,
+      "R": 0.5485,
+      "mAP50": 0.7022,
+      "mAP50_95": 0.4646
+    }
+  },
+  "phase15_test": {
+    "images": 4163,
+    "mAP50": 0.7765,
+    "mAP50_95": 0.5197,
+    "precision": 0.8218,
+    "recall": 0.7037
+  },
+  "phase15_test_per_class": {
+    "blind_road": {
+      "P": 0.8579,
+      "R": 0.8024,
+      "mAP50": 0.8486,
+      "mAP50_95": 0.65
+    },
+    "person": {
+      "P": 0.8298,
+      "R": 0.6559,
+      "mAP50": 0.7534,
+      "mAP50_95": 0.4408
+    },
+    "pole": {
+      "P": 0.7544,
+      "R": 0.7867,
+      "mAP50": 0.8227,
+      "mAP50_95": 0.4832
+    },
+    "car": {
+      "P": 0.8066,
+      "R": 0.7001,
+      "mAP50": 0.7717,
+      "mAP50_95": 0.5128
+    },
+    "tree": {
+      "P": 0.7187,
+      "R": 0.7637,
+      "mAP50": 0.7965,
+      "mAP50_95": 0.4239
+    },
+    "motorcycle": {
+      "P": 0.801,
+      "R": 0.6798,
+      "mAP50": 0.762,
+      "mAP50_95": 0.4569
+    },
+    "warning_column": {
+      "P": 0.8356,
+      "R": 0.768,
+      "mAP50": 0.8295,
+      "mAP50_95": 0.4477
+    },
+    "crosswalk": {
+      "P": 0.9061,
+      "R": 0.8466,
+      "mAP50": 0.8968,
+      "mAP50_95": 0.7132
+    },
+    "bicycle": {
+      "P": 0.7817,
+      "R": 0.5319,
+      "mAP50": 0.6522,
+      "mAP50_95": 0.3697
+    },
+    "green_light": {
+      "P": 0.8977,
+      "R": 0.9146,
+      "mAP50": 0.9525,
+      "mAP50_95": 0.5846
+    },
+    "red_light": {
+      "P": 0.8344,
+      "R": 0.8511,
+      "mAP50": 0.8805,
+      "mAP50_95": 0.5319
+    },
+    "roadblock": {
+      "P": 0.8907,
+      "R": 0.7229,
+      "mAP50": 0.8141,
+      "mAP50_95": 0.5879
+    },
+    "cone": {
+      "P": 0.8625,
+      "R": 0.6696,
+      "mAP50": 0.7684,
+      "mAP50_95": 0.5013
+    },
+    "truck": {
+      "P": 0.684,
+      "R": 0.4471,
+      "mAP50": 0.5382,
+      "mAP50_95": 0.3758
+    },
+    "sign": {
+      "P": 0.8324,
+      "R": 0.6804,
+      "mAP50": 0.7515,
+      "mAP50_95": 0.5139
+    },
+    "trash_bin": {
+      "P": 0.8195,
+      "R": 0.7381,
+      "mAP50": 0.7915,
+      "mAP50_95": 0.6175
+    },
+    "bus": {
+      "P": 0.8334,
+      "R": 0.4844,
+      "mAP50": 0.6096,
+      "mAP50_95": 0.4293
+    },
+    "tricycle": {
+      "P": 0.8755,
+      "R": 0.6847,
+      "mAP50": 0.7691,
+      "mAP50_95": 0.6121
+    },
+    "fire_hydrant": {
+      "P": 0.8628,
+      "R": 0.6963,
+      "mAP50": 0.798,
+      "mAP50_95": 0.5767
+    },
+    "dog": {
+      "P": 0.7371,
+      "R": 0.6188,
+      "mAP50": 0.6701,
+      "mAP50_95": 0.4362
+    },
+    "stairs": {
+      "P": 0.8153,
+      "R": 0.6682,
+      "mAP50": 0.7608,
+      "mAP50_95": 0.5204
+    },
+    "manhole": {
+      "P": 0.9081,
+      "R": 0.7975,
+      "mAP50": 0.8721,
+      "mAP50_95": 0.6979
+    },
+    "guard_rail": {
+      "P": 0.7934,
+      "R": 0.6812,
+      "mAP50": 0.7034,
+      "mAP50_95": 0.4247
+    },
+    "chair": {
+      "P": 0.7517,
+      "R": 0.7029,
+      "mAP50": 0.7624,
+      "mAP50_95": 0.5352
+    },
+    "bench": {
+      "P": 0.7738,
+      "R": 0.8551,
+      "mAP50": 0.9105,
+      "mAP50_95": 0.6027
+    },
+    "plant_pot": {
+      "P": 0.9031,
+      "R": 0.5485,
+      "mAP50": 0.7022,
+      "mAP50_95": 0.4646
+    }
+  },
+  "diff_vs_phase15": {
+    "overall": {
+      "mAP50": 0.0,
+      "mAP50_95": 0.0,
+      "precision": 0.0,
+      "recall": 0.0
+    }
+  },
+  "failure_counts": {
+    "blind_road_missed_images": 104,
+    "blind_road_falsepos_images": 63,
+    "any_missed_images": 2482,
+    "any_falsepos_images": 2438,
+    "per_class_missed": {
+      "blind_road": 803,
+      "person": 4328,
+      "pole": 3937,
+      "car": 2816,
+      "tree": 2381,
+      "motorcycle": 1504,
+      "warning_column": 699,
+      "crosswalk": 1077,
+      "bicycle": 1050,
+      "green_light": 279,
+      "red_light": 325,
+      "roadblock": 438,
+      "cone": 562,
+      "truck": 728,
+      "sign": 2112,
+      "trash_bin": 223,
+      "bus": 229,
+      "tricycle": 211,
+      "fire_hydrant": 142,
+      "dog": 69,
+      "stairs": 55,
+      "manhole": 166,
+      "guard_rail": 49,
+      "chair": 59,
+      "bench": 10,
+      "plant_pot": 13
+    },
+    "per_class_falsepos": {
+      "blind_road": 74,
+      "person": 1346,
+      "pole": 1801,
+      "car": 1327,
+      "tree": 1733,
+      "motorcycle": 602,
+      "warning_column": 376,
+      "crosswalk": 205,
+      "bicycle": 256,
+      "green_light": 125,
+      "red_light": 204,
+      "roadblock": 82,
+      "cone": 144,
+      "truck": 255,
+      "sign": 139,
+      "trash_bin": 125,
+      "bus": 63,
+      "tricycle": 45,
+      "fire_hydrant": 39,
+      "dog": 70,
+      "stairs": 34,
+      "manhole": 38,
+      "guard_rail": 14,
+      "chair": 38,
+      "bench": 19,
+      "plant_pot": 3
+    }
+  },
+  "sample_counts": {
+    "A_random": 12,
+    "B_good": 1340,
+    "C_lowconf": 2258,
+    "D_missed": 104,
+    "E_falsepos": 63,
+    "F_longtail": 605,
+    "G_confusable": 1168
+  },
+  "performance": {
+    "device": "0",
+    "model_size_mb": 6.27,
+    "single_ms_per_img": 11.34,
+    "single_fps": 88.19,
+    "batched_ms_per_img": 49.46,
+    "batched_fps": 20.22,
+    "gpu_vram_mb_peak": 4075.1,
+    "cpu_single_ms_per_img": 29.14,
+    "cpu_single_fps": 34.31
+  },
+  "disk_end": {
+    "free_gb": 73.5,
+    "status": "NORMAL"
+  }
+}
