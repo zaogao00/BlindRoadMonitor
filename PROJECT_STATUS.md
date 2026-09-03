@@ -3,7 +3,7 @@
 ## Phase 00 — 项目安全与磁盘管理初始化
 
 ### 当前状态 (Current Status)
-- **阶段**: Phase 00 / 02–09 已完成 ✅；**Phase 10 数据集分析 已完成 ✅**；**Phase 11 YOLO 数据集转换 已完成 ✅** (17,908 图 / 195,719 实例 / 26 类)；**Phase 12 可视化质量检查 已完成 ✅** (120 张全部正常)；**Phase 13 小规模训练验证 已完成 ✅** (YOLOv8n, 450 图 / 10 epochs / mAP50 0.301 复评)；**Phase 14 训练结果分析 已完成 ✅** — 盲道类 mAP50 **0.662** (10 epochs), 数据/标签/收敛/GPU 四项判断全部正常, **可正式训练**
+- **阶段**: Phase 00 / 02–09 已完成 ✅；**Phase 10 数据集分析 已完成 ✅**；**Phase 11 YOLO 数据集转换 已完成 ✅** (17,908 图 / 195,719 实例 / 26 类)；**Phase 12 可视化质量检查 已完成 ✅** (120 张全部正常)；**Phase 13 小规模训练验证 已完成 ✅** (YOLOv8n, 450 图 / 10 epochs / mAP50 0.301 复评)；**Phase 14 训练结果分析 已完成 ✅** — 盲道类 mAP50 **0.662** (10 epochs), 四项判断正常；**Phase 15 全量正式训练 已完成 ✅** (YOLOv8n, 17,908 图 / 200 epochs / **test mAP50 0.776** / **盲道类 mAP50 0.849** ✅ 达成 ≥0.75)
 - **整体状态**: 数据与训练管线验证通过, 磁盘状态 **NORMAL**, 可进入全量正式训练 (Phase 15 候选)。
 - **硬件**: NVIDIA RTX 5070 (8GB VRAM)
 - **项目根目录**: `D:\BlindRoadMonitor`
@@ -17,7 +17,7 @@
 | 总空间       | ~200 GB (沙箱视图)    | —      |
 | 已使用       | ~135.7 GB (67.9%)     | —      |
 | 剩余空间     | **~64.3 GB** (Phase 13 后) | NORMAL (≥ 30 GB) |
-| 项目目录占用 | ~8.9 GB (raw 4.41 + processed 4.37 + runs 权重 ~50 MB + smoke 126 MB) | 已计入已使用 |
+| 项目目录占用 | ~8.9 GB (raw 4.41 + processed 4.37 + runs 权重 ~50 MB + smoke 126 MB + **prod_b32 ~150 MB**) | 已计入已使用 |
 | venv 占用    | ~4.7 GB (PyTorch GPU + Ultralytics) | 已计入已使用 |
 | ROD 数据集   | 225.7 MB (raw; 4,000 图 + 4,000 标签) | 已计入已使用 |
 | WOTR 数据集  | 4.19 GB (raw; 13,928 图 + VOC) | 已计入已使用 |
@@ -191,8 +191,26 @@
 - **正式训练建议** (详见 `docs/training_report.md` §5): yolov8n 起步 (可试 s) ｜ epochs 150–200 (early-stop 30–50) ｜ batch **32** (smoke 峰值仅 1.93 GB, 余量足; s 模型则 16–24) ｜ imgsz 640 ｜ 全量 17,908 图 ｜ 默认 aug + close_mosaic=10, 长尾考虑 cls 权重 ｜ smoke best.pt warm-start 可选 ｜ 预期 mAP50 0.55–0.70 (盲道 ≥0.75)。
 - **输出文档**: `docs/training_report.md` (完整分析 + 建议)。
 
+### Phase 15 — 全量正式训练 (已完成 ✅; 2026-09-03)
+- **性质**: 按 Phase 14 建议 + 用户明确授权执行全量正式训练; 正式数据规模 (17,908 图); 优先稳定 (RTX 5070 8GB, 不碰系统 CUDA); 训练中每 epoch 回调监控 D 盘, <15GB 安全停止; 产物落 `runs/` 不覆盖旧实验。
+- **工具**: 新增 `scripts/run_prod_train.py` (训练运行器, 含磁盘闸门回调 + 沙箱适配) 与 `scripts/finalize_phase15.py` (收尾复评, 仅评估不重训)。
+- **配置**: YOLOv8n (COCO 预训练, 3.01M params) ｜ imgsz=640 ｜ **batch=32** ｜ **epochs=200** (patience=40, 实际跑满) ｜ amp=True ｜ close_mosaic=10 ｜ optimizer=auto(MuSGD) ｜ cos_lr=True ｜ cls=1.0 ｜ seed=20260902 ｜ workers=0 ｜ device=RTX 5070 8GB。
+- **结果**: 总耗时 **≈12.5 小时** ｜ GPU 峰值 **~5.0 GB / 8 GB** (无 OOM, batch 无需降级) ｜ disk 全程 NORMAL (73.7→73.6 GB, 未触发红线) ｜ 0 CUDA error / 0 崩溃。
+- **指标 (best.pt 复评)**:
+  - 整体 (test 4,163 图 / 35,128 实例): **mAP50 0.776** / mAP50-95 0.520 / P 0.822 / R 0.704 (val mAP50 0.775)。
+  - ⭐ **blind_road (test): mAP50 0.849 / mAP50-95 0.650 / P 0.858 / R 0.802** → **达成 Phase 14 目标 ≥0.75** ✅ (val mAP50 0.853)。
+  - 最高类: green_light 0.941 / red_light 0.889 / crosswalk 0.892 / manhole 0.887; 最低类 (长尾): truck 0.540 / guard_rail 0.622 / plant_pot 0.652 / dog 0.656。
+- **与 Phase 14 对比**: 整体 mAP50 0.301→0.775 (**+0.474**); blind_road mAP50 0.662→0.853 (**+0.191**)。
+- **四项判断复核**: 数据能训练 ✅ / 标签正确 ✅ / 模型正常收敛 ✅ / GPU 稳定 ✅。
+- **产物**: `runs/yolov8n_prod_b32/weights/{best,last}.pt` + `results.csv` + 训练曲线; `docs/final_training_stats.json` (入库); 首次误启动空壳已改名 `yolov8n_prod_b32_aborted_partial` (可删)。
+- **实施修复 (环境, 非模型)**: 收尾脚本将 `trainer.save_dir` (Path) 直接塞入 `json.dump` 抛 TypeError 致进程非零退出 → 已用 `str()` 包裹修复, 并以 `finalize_phase15.py` 补产统计 (训练成果本身 100% 有效)。
+- **输出文档**: `docs/final_training_report.md` (完整报告) + `docs/final_training_stats.json`。
+
 ### 下一步 (Next Steps)
-- **全量正式训练 (Phase 15 候选)**: 按 `docs/training_report.md` §5 建议执行 — 使用 `datasets/processed/data.yaml` (17,908 图 / train 10,043), YOLOv8n (可 warm-start smoke best.pt), `imgsz=640`, `batch=32` (OOM 降 16), `epoch=150–200` + early-stop, `amp=True`, `close_mosaic=10`; 全程监控 `blind_road` 类 mAP50 (目标 ≥0.75) 与长尾类表现。
+- **Phase 16 候选 — 推理验证**: 用 `runs/yolov8n_prod_b32/weights/best.pt` 跑真实盲道场景图, 确认部署侧检测行为 (盲道 + 障碍物预警)。
+- **长尾优化 (可选)**: truck / guard_rail / bicycle / bus / dog / plant_pot mAP50 偏低 (与 437:1 长尾分布一致, 非标签错误) → 过采样 / 类别权重 / 补充数据源。
+- **更大模型 (可选)**: YOLOv8s (batch 16–24, 8GB 仍可) 追求更高精度。
+- **部署 (可选)**: 导出 ONNX / TensorRT(INT8) 供边缘端预警系统。
 - 任何下载 / 解压 / 训练前, 必须调用 `check_before_operation()` 做闸门校验。
 - 持续监控: 定期运行 `python scripts/check_disk_space.py`, 状态低于 NORMAL 时按策略暂停或停止。
 

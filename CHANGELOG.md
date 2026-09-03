@@ -2,6 +2,39 @@
 
 本项目所有重要变更记录于此。格式参考 Keep a Changelog。
 
+## [Phase 15] — 2026-09-03 (全量正式训练 COMPLETE)
+
+### Added (新增)
+- **`scripts/run_prod_train.py`**: 全量训练运行器 (YOLOv8n + imgsz=640 + batch32 + 200 epochs + amp + close_mosaic=10; 含每 epoch 磁盘闸门回调 `on_train_epoch_end` + 沙箱适配)
+- **`scripts/finalize_phase15.py`**: 收尾复评脚本 (best.pt 仅评估 val/test, 不重训; 补产 `final_training_stats.json`)
+- **`docs/final_training_report.md`**: 正式训练报告 (配置/时长/显存/loss/整体+每类指标/与 smoke 对比/盲道专项/四项判断/产物/后续)
+- **`docs/final_training_stats.json`**: 复评统计 (val+test 每类 P/R/mAP, 可复现)
+- **`runs/yolov8n_prod_b32/`**: best.pt / last.pt / results.csv / 训练曲线
+
+### Trained (训练结果 — 200 epochs / ≈12.5h / RTX 5070 8GB)
+- GPU 峰值 **~5.0 GB** (无 OOM, batch=32 稳定) ｜ 0 CUDA error ｜ 0 崩溃 ｜ disk 全程 NORMAL (73.7→73.6 GB)
+- 整体 (test 4,163 图 / 35,128 实例): **mAP50 0.776** / mAP50-95 0.520 / P 0.822 / R 0.704 (val mAP50 0.775)
+- ⭐ **blind_road (test): mAP50 0.849 / mAP50-95 0.650 / P 0.858 / R 0.802** — **达成 Phase 14 目标 ≥0.75** ✅ (val 0.853)
+- 最高类: green_light 0.941 / red_light 0.889 / crosswalk 0.892 / manhole 0.887; 最低 (长尾): truck 0.540 / guard_rail 0.622 / plant_pot 0.652
+
+### Compared (与 Phase 14 smoke 对比)
+- 整体 mAP50 0.301→0.775 (**+0.474**) ｜ blind_road mAP50 0.662→0.853 (**+0.191**)
+
+### Verified (四项判断复核)
+- 数据能训练 ✅ / 标签正确 ✅ / 模型正常收敛 ✅ / GPU 稳定 ✅ (loss 单调下降, mAP 稳定上升后平台, 跑满 200 epoch 未早停)
+
+### Fixed (收尾修复 — 环境, 非模型问题)
+- **`Path` 不可序列化**: `run_prod_train.py` 收尾将 `trainer.save_dir` (WindowsPath) 直接塞入 `json.dump` 抛 TypeError → 进程非零退出, 平台标记 failed;
+  训练成果 (权重/csv/曲线/测试评估) 均已正常产出, 以 `finalize_phase15.py` 补产统计 (不重训), 根因加 `str()` 包裹修复
+
+### Safety (安全约束落实)
+- 未改/未删任何用户文件; `datasets/**` 零改动; 未碰系统 CUDA
+- 磁盘闸门每 epoch 生效, 全程 NORMAL, 未触发 <15GB 安全停止
+- 权重落 `runs/` (gitignore 屏蔽); 首次误启动空壳改名 `yolov8n_prod_b32_aborted_partial` (可删)
+
+### Git
+- 提交: `Phase 15: production training`
+
 ## [Phase 14 修订] — 2026-09-02 (分析统计口径修正)
 
 ### Fixed (修正 — 经 workbuddy 审查确认)

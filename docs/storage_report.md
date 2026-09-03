@@ -49,6 +49,14 @@
 - **实施修复**: curl→requests 通道、标签字节阈值 (100→0)、HF 并发 16→5 + 429 退避；新增 `scripts/download_wotr.py` (gdown + Range 续传)。
 - 项目目录占用现约 340 MB（含数据集元数据；ROD 225.7 MB + WOTR 8.1 GB 本体另计, 均已被 `.gitignore` 屏蔽）。
 
+### 2.2 Phase 15 更新 (全量正式训练 — 2026-09-03)
+
+- **训练产物**: `runs/yolov8n_prod_b32/` 新增 best.pt / last.pt / results.csv / 训练曲线, 合计约 **150 MB** (权重各 ~6.2 MB, 曲线 PNG 为主); 均被 `.gitignore` 屏蔽, 不入库。
+- **磁盘闸门 (每 epoch 生效)**: 训练前 NORMAL (73.7 GB) → 训练中每 epoch 回调实测 D 盘剩余, 全程 **未低于 15 GB**, 末 epoch `free=73.6GB status=NORMAL`; `stopped_by_disk_danger=false`, 从未触发安全停止。
+- **首启空壳**: 因后台任务托管方式不当留下空目录 `runs/yolov8n_prod_b32_aborted_partial`, 已改名避免覆盖正式实验, 无内容, 可安全删除 (不影响任何数据)。
+- **总占用现状**: raw 4.41 + processed 4.37 + smoke 126 MB + **prod_b32 ~150 MB** ≈ 9.06 GB (数据集本体 WOTR 4.19 GB / ROD 225.7 MB 另计); D 盘全程 NORMAL, 余量充足。
+- **未触发任何下载/解压/删除**: 训练纯本地 (数据已就绪), 未出网, 未触碰系统 CUDA / 任何用户文件。
+
 ---
 
 ## 3. 项目目录结构 (Project Layout)
