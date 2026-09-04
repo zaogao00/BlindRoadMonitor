@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>智能盲道障碍物监测与预警系统</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>智能盲道障碍物监测与预警系统</h1>
+    <span class="sub">Phase 19 · Web UI + 障碍物实时提醒</span>
+  </header>
+
+  <main class="layout">
+    <!-- 左: 实时视频 -->
+    <section class="video-pane">
+      <div class="video-wrap">
+        <img id="video" src="/video_feed" alt="实时摄像头画面" />
+      </div>
+    </section>
+
+    <!-- 右: 状态面板 -->
+    <aside class="status-pane">
+      <h2>系统状态</h2>
+      <div class="row"><span class="k">Camera</span><span id="st-camera" class="v">…</span></div>
+      <div class="row"><span class="k">Model</span><span id="st-model" class="v">…</span></div>
+      <div class="row"><span class="k">Stream FPS</span><span id="st-fps" class="v">…</span></div>
+      <div class="row"><span class="k">Model FPS</span><span id="st-fpsm" class="v">…</span></div>
+      <div class="row"><span class="k">Blind Road</span><span id="st-blind" class="v">…</span></div>
+      <div class="row"><span class="k">Obstacles</span><span id="st-obs" class="v">0</span></div>
+      <div class="row"><span class="k">TTS 语音</span><span id="st-tts" class="v">…</span></div>
+
+      <h2 class="mt">当前障碍物</h2>
+      <ul id="obs-list" class="obs-list"><li class="muted">当前未检测到障碍物</li></ul>
+    </aside>
+  </main>
+
+  <!-- 底部: 视觉警告横幅 -->
+  <div id="alert-banner" class="alert-banner hidden">
+    <div class="alert-title">⚠️ 检测到障碍物，请注意！</div>
+    <div id="alert-msg" class="alert-msg"></div>
+    <div id="alert-list" class="alert-list"></div>
+  </div>
+
+  <footer class="foot">
+    <span id="foot-note">本地访问 · http://127.0.0.1:8000 · 仅本机</span>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

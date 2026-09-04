@@ -2,6 +2,50 @@
 
 本项目所有重要变更记录于此。格式参考 Keep a Changelog。
 
+## [Phase 19] — 2026-09 (Web UI + 障碍物实时提醒 COMPLETE — GO)
+
+### Added (新增)
+- **`backend/alert.py`**: `AlertManager` — 障碍物类别筛选 (由 data.yaml 26 类派生, 排除 blind_road/crosswalk/green_light/red_light 共 22 类障碍物) / 盲道状态 / 提醒冷却 (2.5s) / 多障碍物去重合并中文文案 / 异步 TTS (独立线程 + 队列, 不阻塞检测) / TTS 不可用优雅降级
+- **`backend/web.py`**: FastAPI 应用 — 单 camera worker 线程 (全程只开一次源, 规格 §18) / MJPEG `/video_feed` / `GET /api/status` JSON (camera/model/fps_stream/fps_model/blind_road/obstacles/alert/alert_message/tts_available) / `GET /api/obstacle_classes` / `/static` 前端 / 绑定 127.0.0.1 / 复用 detector 沙箱兼容 + camera 多 backend 回退
+- **`frontend/index.html` + `style.css` + `app.js`**: 中文 UI (大视频区 + 状态面板 + 警告横幅), 每 500ms 轮询 `/api/status` 更新 Camera/Model/FPS/Blind Road/Obstacles/TTS/障碍物列表/警告横幅; 原生 HTML/CSS/JS 无构建
+- **`scripts/run_web.py`**: 启动入口 (argparse: --source/--host/--port/--model/--conf/--imgsz/--device/--iou; 默认 127.0.0.1:8000, conf=0.20)
+- **`docs/web_ui_report.md`**: Phase 19 报告 (20 节, 含 GO 判定 + Phase 20 建议)
+
+### Web UI (规格 §三~§十七)
+- 浏览器 `http://127.0.0.1:8000` 看实时画面 (检测框/类别/置信度)
+- 实时 FPS: 同时显示 Stream FPS (实际 Web/视频链) 与 Model FPS (YOLO 推理), 不把 100+ 冒充网页 FPS
+- 盲道状态: Detected / Detected (N) / Not Detected
+- 障碍物状态 + 具体类别列表 (中文名 + 置信度)
+
+### 障碍物提醒 (本阶段核心, 规格 §五~§十三)
+- 视觉警告: 检测到障碍物 → 底部横幅 `⚠️ 检测到障碍物，请注意！` + 类别列表; 消失即隐藏
+- TTS 语音: pyttsx3 (Windows SAPI, 本机语音, 无大模型/无 CUDA 依赖); 文案如 `检测到汽车、卡车，请注意。` / `检测到行人、汽车，请注意。`
+- 提醒冷却: 2.5s, 持续障碍物每 ~2.5s 播报一次, 非逐帧刷屏 (实测持续 6s 仅 2 次)
+- 多障碍物去重: 同类多 bbox 不重复; 多类合并成一句 (≤3 类列出, >3 → "检测到多个障碍物")
+- 不阻塞: TTS 独立线程 + 队列, 未导致 FPS 下降 / 卡顿
+
+### Verified (headless, curl 验证)
+- 页面 HTTP 200 中文标题 / 单 camera worker 全程一次 / YOLO 检测框正常
+- Stream FPS ~90–101 / Model FPS ~98–114 (图片回放; 真实摄像头 ~27 FPS 见 Phase 18)
+- 盲道 Detected & Not Detected 均观察到 (默认 conf=0.20 缓解漏检)
+- 障碍物 car/truck → alert=True, 文案正确; 多障碍物 person+pole → 合并
+- TTS 沙箱 SAPI 可用 + 语音事件触发 (真实播报待用户本机音频验证)
+- 冷却每 ~2.5s 一次 (非逐帧); 连续数分钟稳定无 OOM/崩溃
+
+### Decision (Go / No-Go)
+- **GO**: Web/Camera/YOLO/BlindRoad/Obstacle/视觉提醒/TTS/冷却/多障碍物/连续运行 全 PASS
+- 已实现"摄像头→YOLO→网页→障碍物检测→视觉提醒→TTS"完整链路
+- **未做** (留 Phase 20): 障碍物是否占用盲道 的空间关系判断
+
+### Safety (安全约束落实)
+- 不重训 / 不改 best.pt / 不导出 ONNX-TensorRT / 不修改数据集 / 不删任何文件
+- 仅装最小依赖 fastapi/uvicorn/pyttsx3 (venv 内, 经 Clash 7897); 未装 CUDA Toolkit / 大模型 / Node
+- 未进 Phase 20 (按规格 §39/§40 边界)
+- 未 push (按用户约束, 仅本地 `git commit "Phase 19: web UI and obstacle alert"`)
+
+### Git
+- 提交: `Phase 19: web UI and obstacle alert`
+
 ## [Phase 18] — 2026-09-04 (部署/推理性能优化 COMPLETE — GO, 无需 ONNX/TensorRT)
 
 ### Added (新增)

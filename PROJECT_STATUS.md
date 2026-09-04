@@ -3,7 +3,7 @@
 ## Phase 00 — 项目安全与磁盘管理初始化
 
 ### 当前状态 (Current Status)
-- **阶段**: Phase 00 / 02–09 已完成 ✅；**Phase 10 数据集分析 已完成 ✅**；**Phase 11 YOLO 数据集转换 已完成 ✅** (17,908 图 / 195,719 实例 / 26 类)；**Phase 12 可视化质量检查 已完成 ✅** (120 张全部正常)；**Phase 13 小规模训练验证 已完成 ✅** (YOLOv8n, 450 图 / 10 epochs / mAP50 0.301 复评)；**Phase 14 训练结果分析 已完成 ✅** — 盲道类 mAP50 **0.662** (10 epochs), 四项判断正常；**Phase 15 全量正式训练 已完成 ✅** (YOLOv8n, 17,908 图 / 200 epochs / **test mAP50 0.776** / **盲道类 mAP50 0.849** ✅ 达成 ≥0.75)；**Phase 16 推理验证 已完成 ✅** (best.pt 复现 test mAP50 0.776 / 盲道 mAP50 0.849 / GPU 88 FPS / 显存 4.07 GB；判定 **GO** 进入 Phase 17)；**Phase 17 实时摄像头检测 已完成 ✅** (headless 验证: best.pt 加载/摄像头打开/连续读帧/实时推理+绘制/模型推理 78.6 FPS/GPU 无错无 OOM；链路 PASS, 可见窗口与物理摄像头实景待用户本地确认)；**Phase 18 部署/推理性能优化 已完成 ✅** (PyTorch FP32 9.5ms→105FPS / FP16 10.1ms→98.6FPS, 真实GPU占用216MiB; FP32=FP16检测一致; 盲道图像级召回0.878 PASS; 端到端27–28FPS(瓶颈在摄像头读帧); 判定 GO, 无需 ONNX/TensorRT)
+- **阶段**: Phase 00 / 02–09 已完成 ✅；**Phase 10 数据集分析 已完成 ✅**；**Phase 11 YOLO 数据集转换 已完成 ✅** (17,908 图 / 195,719 实例 / 26 类)；**Phase 12 可视化质量检查 已完成 ✅** (120 张全部正常)；**Phase 13 小规模训练验证 已完成 ✅** (YOLOv8n, 450 图 / 10 epochs / mAP50 0.301 复评)；**Phase 14 训练结果分析 已完成 ✅** — 盲道类 mAP50 **0.662** (10 epochs), 四项判断正常；**Phase 15 全量正式训练 已完成 ✅** (YOLOv8n, 17,908 图 / 200 epochs / **test mAP50 0.776** / **盲道类 mAP50 0.849** ✅ 达成 ≥0.75)；**Phase 16 推理验证 已完成 ✅** (best.pt 复现 test mAP50 0.776 / 盲道 mAP50 0.849 / GPU 88 FPS / 显存 4.07 GB；判定 **GO** 进入 Phase 17)；**Phase 17 实时摄像头检测 已完成 ✅** (headless 验证: best.pt 加载/摄像头打开/连续读帧/实时推理+绘制/模型推理 78.6 FPS/GPU 无错无 OOM；链路 PASS, 可见窗口与物理摄像头实景待用户本地确认)；**Phase 18 部署/推理性能优化 已完成 ✅** (PyTorch FP32 9.5ms→105FPS / FP16 10.1ms→98.6FPS, 真实GPU占用216MiB; FP32=FP16检测一致; 盲道图像级召回0.878 PASS; 端到端27–28FPS(瓶颈在摄像头读帧); 判定 GO, 无需 ONNX/TensorRT)；**Phase 19 Web UI + 障碍物实时提醒 已完成 ✅** (FastAPI+uvicorn+pyttsx3; 单 camera worker 线程 + MJPEG /video_feed + /api/status; 视觉警告横幅 + TTS 语音提醒(冷却 2.5s / 多障碍物去重合并); 盲道 Detected/Not Detected; 默认 conf=0.20; 障碍物检测/视觉提醒/TTS/冷却/多障碍物去重/连续运行 全 PASS; 判定 GO; 空间关系判断留 Phase 20)
 - **整体状态**: 数据与训练管线验证通过, 磁盘状态 **NORMAL**, 可进入全量正式训练 (Phase 15 候选)。
 - **硬件**: NVIDIA RTX 5070 (8GB VRAM)
 - **项目根目录**: `D:\BlindRoadMonitor`
@@ -239,9 +239,20 @@
 - **实施修复 (环境, 非模型)**: 无。
 - **输出文档**: `docs/deployment_optimization_report.md` (完整报告)
 
+### Phase 19 — Web UI + 障碍物实时提醒 (已完成 ✅; 2026-09, headless 验证)
+- **性质**: 实现本地 Web 系统, 浏览器看实时画面 + 检测框/类别/置信度/FPS, 检测到障碍物→**视觉警告 + TTS 语音**; **不重训 / 不改 best.pt / 不导出 / 不进下一阶段**。
+- **新增**: `backend/alert.py` (障碍物筛选+盲道+冷却2.5s+去重+异步TTS队列) / `backend/web.py` (FastAPI 应用, 单 camera worker, MJPEG /video_feed, /api/status JSON) / `frontend/{index.html,style.css,app.js}` (中文 UI, 500ms 轮询状态) / `scripts/run_web.py` (启动入口, --source/--conf/--port)。
+- **技术栈**: FastAPI 0.141.1 + uvicorn 0.52.4 + pyttsx3 2.99 (Windows SAPI, 无大模型/无 CUDA); 原生 HTML/CSS/JS (无 React/Vue)。依赖装入项目 venv (经 Clash 7897)。
+- **推理设置**: imgsz=640 / batch=1 / device=0 / workers=0 / FP32 / **默认 conf=0.20** (Phase 16/17/18 建议盲道运行阈值; 原 0.25 漏检偏多)。
+- **结果 (headless 沙箱, curl 验证)**: 页面 HTTP 200 中文标题; 单 camera worker 全程只开一次源; YOLO 检测框正常; Stream FPS ~90–101 / Model FPS ~98–114 (图片回放, 无真实读帧开销; 真实摄像头 ~27 FPS 见 Phase 18); 盲道 Detected/Not Detected 均观察到; 障碍物 car/truck→alert=True, 文案 `检测到汽车、卡车，请注意。`; TTS 沙箱 SAPI 可用+事件触发 (语音播报待用户本机音频验证); **冷却每 ~2.5s 一次非逐帧**; 多障碍物去重合并 `检测到行人、汽车，请注意。`; 连续数分钟稳定无 OOM/崩溃。
+- **判定**: **GO** — Web/Camera/YOLO/BlindRoad/Obstacle/视觉提醒/TTS/冷却/多障碍物/连续运行 全 PASS; 已达成"摄像头→YOLO→网页→障碍物检测→视觉提醒→TTS"链路。尚未完成"是否占用盲道"空间关系 (Phase 20)。
+- **已知限制**: 沙箱 headless 无显示器/浏览器未截图可见网页 (MJPEG/HTML/status 已 curl 验证, 用户本机打开 http://127.0.0.1:8000 确认); 盲道 ~10–20% 实例漏检 (模型固有, conf=0.20 缓解); 真实摄像头端到端 ~27 FPS (瓶颈在摄像头读帧)。
+- **产物**: `docs/web_ui_report.md` (完整报告)。
+- **输出文档**: `docs/web_ui_report.md` (完整报告)
+
 ### 下一步 (Next Steps)
-- **Phase 18 已完成 ✅ — 部署/推理性能优化**: PyTorch FP32 9.5ms→105FPS (FP16 10.1ms→98.6FPS, 本机 FP16 略慢故保留 FP32); 真实 GPU 占用 216MiB; FP32=FP16 检测一致; 盲道图像级召回 0.878@0.25 PASS; 端到端 27–28 FPS (瓶颈在摄像头读帧, 非模型); 判定 GO, 无需 ONNX/TensorRT (详见 docs/deployment_optimization_report.md)。
-- **Phase 19 候选 — 摄像头告警/语音(TTS)**: 给盲人用的系统画面叠加无效, 需音频提醒; 对 blind_road 低置信阈值 + 告警降级; 长尾弱类暂不作高可信事件 (Phase 17 链路 + Phase 18 性能均已就绪, 见上)。
+- **Phase 19 已完成 ✅ — Web UI + 障碍物实时提醒**: FastAPI+uvicorn+pyttsx3; 单 camera worker + MJPEG + /api/status; 视觉警告横幅 + TTS(冷却2.5s/去重); 盲道 Detected/Not Detected; 默认 conf=0.20; 障碍物检测/视觉提醒/TTS/冷却/多障碍物/连续运行 全 PASS, GO (详见 docs/web_ui_report.md)。
+- **Phase 20 候选 — 障碍物是否占用盲道 (空间关系)**: `blind_road bbox + obstacle bbox` → IoU/中心距离/投影 → 判定"疑似占用盲道" → 高优先级提醒 (`🔴 障碍物疑似占用盲道，请注意！`); 在 Phase 19 AlertManager 上增加 SpatialChecker, 告警分级 (普通障碍物 / 占用盲道); 长尾弱类可补充数据 (Phase 16 已记录)。
 - **长尾优化 (可选)**: truck / guard_rail / bicycle / bus / dog / plant_pot mAP50 偏低 (与 437:1 长尾分布一致, 非标签错误) → 过采样 / 类别权重 / 补充数据源。
 - **更大模型 (可选)**: YOLOv8s (batch 16–24, 8GB 仍可) 追求更高精度。
 - **部署 (可选)**: 仅当部署端需要时导出 ONNX / TensorRT(INT8), Phase 16/17 按约束未导出。
