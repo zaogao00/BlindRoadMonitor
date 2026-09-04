@@ -9,7 +9,7 @@
 <body>
   <header class="topbar">
     <h1>智能盲道障碍物监测与预警系统</h1>
-    <span class="sub">Phase 19 · Web UI + 障碍物实时提醒</span>
+    <span class="sub">Phase 20 · 空间关系判断与分级预警</span>
   </header>
 
   <main class="layout">
@@ -29,6 +29,9 @@
       <div class="row"><span class="k">Model FPS</span><span id="st-fpsm" class="v">…</span></div>
       <div class="row"><span class="k">Blind Road</span><span id="st-blind" class="v">…</span></div>
       <div class="row"><span class="k">Obstacles</span><span id="st-obs" class="v">0</span></div>
+      <!-- Phase 20: 盲道占用 (空间关系) -->
+      <div class="row"><span class="k">盲道占用</span><span id="st-occ" class="v">…</span></div>
+      <div class="row"><span class="k">告警等级</span><span id="st-level" class="v">…</span></div>
       <div class="row"><span class="k">TTS 语音</span><span id="st-tts" class="v">…</span></div>
 
       <h2 class="mt">当前障碍物</h2>
@@ -38,8 +41,12 @@
 
   <!-- 底部: 视觉警告横幅 -->
   <div id="alert-banner" class="alert-banner hidden">
-    <div class="alert-title">⚠️ 检测到障碍物，请注意！</div>
+    <div id="alert-title" class="alert-title">⚠️ 检测到障碍物，请注意！</div>
     <div id="alert-msg" class="alert-msg"></div>
+    <!-- Phase 20: Level 2 时列出"相关障碍物" (疑似占用盲道的那些) -->
+    <div id="alert-related" class="alert-related hidden">
+      <span class="rl">相关障碍物：</span><span id="alert-related-list"></span>
+    </div>
     <div id="alert-list" class="alert-list"></div>
   </div>
 

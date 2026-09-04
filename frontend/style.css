@@ -8,6 +8,9 @@
   --ok: #38d39f;
   --warn: #ff5a4d;
   --warn-bg: #3a1410;
+  /* Phase 20: Level 1 普通障碍物 (琥珀) / Level 2 疑似占用盲道 (红) */
+  --amber: #ffb648;
+  --amber-bg: #3a2a10;
   --border: #2c3140;
 }
 
@@ -82,7 +85,9 @@ body {
 
 .v.ok { color: var(--ok); }
 .v.err { color: var(--warn); }
-.v.warn { color: #ffb648; }
+.v.warn { color: var(--amber); }
+/* Phase 20: 盲道占用=疑似 / 告警等级 2 → 红色强调 */
+.v.blocking { color: var(--warn); }
 
 .obs-list { list-style: none; margin: 6px 0 0; padding: 0; }
 .obs-list li {
@@ -96,25 +101,50 @@ body {
 }
 .obs-list li .cf { color: var(--accent); font-variant-numeric: tabular-nums; }
 .obs-list li.muted { color: var(--muted); background: transparent; justify-content: center; }
+/* Phase 20: 疑似占用盲道的障碍物在列表里左侧红条 + 角标 */
+.obs-list li.blocking { border-left: 3px solid var(--warn); }
+.obs-list li .tag {
+  margin-left: 8px; font-size: 12px; color: var(--warn);
+  border: 1px solid var(--warn); border-radius: 10px; padding: 0 7px;
+}
 
 .alert-banner {
   margin: 0 22px 16px;
-  background: var(--warn-bg);
-  border: 1.5px solid var(--warn);
+  /* 默认 = Level 1 普通障碍物: 琥珀色 */
+  background: var(--amber-bg);
+  border: 1.5px solid var(--amber);
   border-radius: 10px;
   padding: 14px 18px;
+  color: #ffe9cc;
+}
+/* Phase 20: Level 2 疑似占用盲道 — 红色, 视觉上强于 Level 1 */
+.alert-banner.blocking {
+  background: var(--warn-bg);
+  border-color: var(--warn);
   color: #ffd9d4;
 }
-.alert-banner.hidden { display: none; }
-.alert-title { font-size: 18px; font-weight: 800; color: var(--warn); }
+.alert-banner.hidden,
+.alert-related.hidden { display: none; }
+
+.alert-title { font-size: 18px; font-weight: 800; color: var(--amber); }
+.alert-banner.blocking .alert-title { color: var(--warn); }
 .alert-msg { font-size: 15px; margin-top: 4px; }
+
+.alert-related { margin-top: 6px; font-size: 14px; }
+.alert-related .rl { color: var(--muted); margin-right: 6px; }
+.alert-related b { color: var(--warn); font-variant-numeric: tabular-nums; }
+
 .alert-list { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px; }
 .alert-list .chip {
-  background: rgba(255,90,77,0.18);
-  border: 1px solid var(--warn);
+  background: rgba(255,182,72,0.16);
+  border: 1px solid var(--amber);
   border-radius: 20px;
   padding: 3px 12px;
   font-size: 13px;
+}
+.alert-banner.blocking .alert-list .chip {
+  background: rgba(255,90,77,0.18);
+  border-color: var(--warn);
 }
 
 .foot { padding: 10px 22px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--border); }

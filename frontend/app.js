@@ -36,6 +36,20 @@
     // Obstacles
     setText("st-obs", String(s.obstacle_count || 0));
 
+    // ---- Phase 20: 空间关系 (盲道占用) + 告警等级 ----
+    const occ = s.occupancy || {};
+    const blocking = !!s.blocking || occ.status === "suspected";
+    if (blocking) {
+      setText("st-occ", "疑似", "blocking");
+    } else if ((s.obstacle_count || 0) > 0) {
+      setText("st-occ", "未发现", "ok");
+    } else {
+      setText("st-occ", "未发现", "");
+    }
+    const lvl = s.alert_level != null ? s.alert_level : (occ.level || 0);
+    const lvlTxt = lvl === 2 ? "2 · 疑似占用盲道" : (lvl === 1 ? "1 · 普通障碍物" : "0 · 无");
+    setText("st-level", lvlTxt, lvl === 2 ? "blocking" : (lvl === 1 ? "warn" : "ok"));
+
     // TTS
     if (s.tts_available) {
       setText("st-tts", "可用", "ok");
@@ -58,6 +72,7 @@
       } else {
         obs.forEach((o) => {
           const li = document.createElement("li");
+          if (o.blocking) li.className = "blocking";  // 疑似占用盲道
           const name = document.createElement("span");
           name.textContent = o.zh || o.class;
           const cf = document.createElement("span");
@@ -65,27 +80,68 @@
           cf.textContent = (o.confidence != null ? o.confidence.toFixed(2) : "");
           li.appendChild(name);
           li.appendChild(cf);
+          if (o.blocking) {
+            const tag = document.createElement("span");
+            tag.className = "tag";
+            tag.textContent = "占用盲道?";
+            li.appendChild(tag);
+          }
           list.appendChild(li);
         });
       }
     }
 
-    // Alert banner
+    // ---- Alert banner (Phase 20: Level 1 琥珀 / Level 2 红色) ----
     const banner = $("alert-banner");
     if (!banner) return;
     if (s.alert) {
       banner.classList.remove("hidden");
+      const lvl2 = (s.alert_level === 2) || blocking;
+      banner.classList.toggle("blocking", !!lvl2);
+      $("alert-title").textContent = lvl2
+        ? "🔴 障碍物疑似占用盲道，请注意！"
+        : "⚠️ 检测到障碍物，请注意！";
       $("alert-msg").textContent = s.alert_message || "检测到障碍物，请注意。";
+
+      // Level 2: 显示"相关障碍物" (即疑似占用盲道的那些, 含几何指标)
+      const rel = $("alert-related");
+      if (rel) {
+        const bo = occ.blocking_obstacles || [];
+        if (lvl2 && bo.length > 0) {
+          rel.classList.remove("hidden");
+          $("alert-related-list").innerHTML = bo
+            .map(function (o) {
+              const nm = o.zh || o.class;
+              const cfi = o.confidence != null ? o.confidence.toFixed(2) : "";
+              const iou = o.iou != null ? o.iou.toFixed(2) : "-";
+              const ovr = o.overlap_ratio != null ? o.overlap_ratio.toFixed(2) : "-";
+              return nm + " <b>" + cfi + "</b>" + " (IoU " + iou + " / 交叠 " + ovr + ")";
+            })
+            .join("　");
+        } else {
+          rel.classList.add("hidden");
+        }
+      }
+
+      // 全部当前障碍物 chip
       const al = $("alert-list");
-      al.innerHTML = "";
-      (s.obstacles || []).forEach((o) => {
-        const chip = document.createElement("span");
-        chip.className = "chip";
-        chip.textContent = (o.zh || o.class) + (o.confidence != null ? " " + o.confidence.toFixed(2) : "");
-        al.appendChild(chip);
-      });
+      if (al) {
+        al.innerHTML = "";
+        (s.obstacles || []).forEach((o) => {
+          const chip = document.createElement("span");
+          chip.className = "chip";
+          chip.textContent =
+            (o.zh || o.class) +
+            (o.confidence != null ? " " + o.confidence.toFixed(2) : "") +
+            (o.blocking ? " · 占用盲道?" : "");
+          al.appendChild(chip);
+        });
+      }
     } else {
       banner.classList.add("hidden");
+      banner.classList.remove("blocking");
+      const rel2 = $("alert-related");
+      if (rel2) rel2.classList.add("hidden");
     }
   }
 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Phase 19 — 障碍物提醒模块 (AlertManager)。
+"""Phase 19 — 障碍物提醒模块 (AlertManager)；Phase 20 在此之上叠加空间关系分级。
 
 职责:
   - 从检测框中筛选"障碍物"类别 (OBSTACLE_CLASS_INDICES, 由 data.yaml 的 26 类派生)
@@ -9,7 +9,13 @@
   - 异步 TTS (独立线程 + 队列, 不阻塞检测主循环)
   - TTS 不可用时优雅降级 (保留视觉提醒, 标记 tts_available=False, 不抛异常)
 
-安全边界 (Phase 19): 不重新训练 / 不改 best.pt / 不修改数据集。
+Phase 20 新增 (复用上述全部机制, 不重写):
+  - 调用 backend.spatial.classify 计算障碍物与 blind_road bbox 的空间关系
+  - 三级告警: Level 0 无障碍 / Level 1 普通障碍物 / Level 2 疑似占用盲道
+  - normal / blocking **两套独立冷却**, 使 Level 1→Level 2 升级能立即触发高级告警
+  - 障碍物类别定义仍只有一份 (OBSTACLE_CLASS_INDICES), spatial.py 不复制
+
+安全边界: 不重新训练 / 不改 best.pt / 不修改数据集。
 """
 import os
 import sys
@@ -43,6 +49,13 @@ ZH_NAMES = {
 ALERT_COOLDOWN = 2.5  # 秒 (规格 §11 建议 2~3 秒)
 TTS_RATE = 160       # 语速 (Windows SAPI, 默认 200, 略降更清晰)
 
+# Phase 20 — 空间关系判断 (纯几何, 不复制类别列表, 只接收已筛好的 bbox)
+# 兼容两种被 import 的方式: 作为 backend 包成员 (backend.alert) 或 backend 在 sys.path 上 (alert)
+try:  # noqa: E402
+    from .spatial import classify as _spatial_classify
+except ImportError:  # noqa: E402
+    from spatial import classify as _spatial_classify
+
 
 class AlertManager:
     """障碍物提醒状态机。线程安全。"""
@@ -63,10 +76,17 @@ class AlertManager:
         self.obstacle_count = 0
         self.alert = False
         self.alert_message = ""
+        self.alert_level = 0         # Phase 20: 0 无障碍 / 1 普通 / 2 疑似占用盲道
+        self.blocking = False         # Phase 20: 是否出现疑似占用盲道
+        self.occupancy = {           # Phase 20: 空间关系判定结果
+            "status": "none", "level": 0, "blocking": False,
+            "obstacles": [], "blocking_obstacles": [], "blind_rects": [],
+        }
 
-        # 冷却去重
-        self._last_alert_time = 0.0
-        self._last_alert_key = ""
+        # 冷却去重 (Phase 19: 单一冷却; Phase 20: 区分 normal / blocking 两套冷却,
+        # 使 Level 2 高级告警不被 Level 1 普通告警的冷却阻塞, 规格 §十六)
+        self._last_tts_normal = 0.0
+        self._last_tts_blocking = 0.0
         self.speech_log = []         # 最近播报文本 (用于验证/调试, 最多 20 条)
 
         self._init_tts()
@@ -107,40 +127,75 @@ class AlertManager:
     def update(self, boxes, names):
         """boxes: list[(x1,y1,x2,y2,cls,conf)]; names: {idx:name}。
 
+        复用现有 OBSTACLE_CLASS_INDICES 筛选障碍物 (不复制类别列表),
+        再调用 spatial.classify 计算"是否疑似占用盲道", 最后分级告警。
         返回当前状态 dict (也可调用 get_status)。
         """
-        blind = []
-        obs = []
+        blind_conf = []
+        blind_rects = []
+        obs_items = []      # 传给 SpatialChecker 的带坐标障碍物
+        obs = []            # 给前端/API 的简化障碍物列表 (无几何)
         for (x1, y1, x2, y2, c, cf) in boxes:
             name = names.get(c, str(c))
             if name == 'blind_road':
-                blind.append(cf)
+                blind_conf.append(cf)
+                blind_rects.append((x1, y1, x2, y2))
             elif c in OBSTACLE_CLASS_INDICES:
+                zh = ZH_NAMES.get(name, name)
+                obs_items.append({
+                    'box': (x1, y1, x2, y2),
+                    'cls': c,
+                    'class': name,
+                    'confidence': cf,
+                    'zh': zh,
+                })
                 obs.append({
                     'class': name,
                     'confidence': round(float(cf), 3),
-                    'zh': ZH_NAMES.get(name, name),
+                    'zh': zh,
                 })
 
+        # ---- Phase 20: 空间关系判定 (复用现有类别定义, 不重算筛选) ----
+        occupancy = _spatial_classify(blind_rects, obs_items)
+        # obs 与 occupancy['obstacles'] 由同一循环构造, 索引对齐 -> 给简化列表打 blocking 标记
+        for i, o in enumerate(obs):
+            if i < len(occupancy["obstacles"]):
+                o["blocking"] = occupancy["obstacles"][i]["blocking"]
+
         with self._lock:
-            self.blind_road = len(blind) > 0
-            self.blind_road_count = len(blind)
+            self.blind_road = len(blind_conf) > 0
+            self.blind_road_count = len(blind_conf)
             self.obstacles = obs
             self.obstacle_count = len(obs)
+            self.occupancy = occupancy
+            self.alert_level = occupancy['level']
+            self.blocking = occupancy['blocking']
 
         now = time.time()
-        if obs:
-            # 视觉提醒: 始终反映"当前帧"是否有障碍物 (不受冷却影响)
+        # 视觉提醒: 始终反映"当前帧"状态 (不受冷却影响, 规格 §十六: 升级立即可见)
+        if occupancy['blocking']:
+            msg = "障碍物疑似占用盲道，请注意。"
+            with self._lock:
+                self.alert = True
+                self.alert_message = msg
+            # TTS (blocking 冷却): Level 2 不被 Level 1 冷却阻塞
+            with self._lock:
+                can_speak = (now - self._last_tts_blocking) >= self.cooldown
+            if can_speak:
+                with self._lock:
+                    self._last_tts_blocking = now
+                self._speak(msg)
+        elif obs:
             msg = self._compose(obs)
             with self._lock:
                 self.alert = True
                 self.alert_message = msg
-            # TTS 语音: 仅在冷却窗口外触发, 防止逐帧刷屏
+            # TTS (normal 冷却)
             with self._lock:
-                can_speak = (now - self._last_alert_time) >= self.cooldown
+                can_speak = (now - self._last_tts_normal) >= self.cooldown
             if can_speak:
                 with self._lock:
-                    self._last_alert_time = now
+                    self._last_tts_normal = now
                 self._speak(msg)
         else:
             with self._lock:
@@ -177,6 +232,9 @@ class AlertManager:
             return {
                 'alert': self.alert,
                 'alert_message': self.alert_message,
+                'alert_level': self.alert_level,
+                'blocking': self.blocking,
+                'occupancy': dict(self.occupancy),
                 'obstacles': list(self.obstacles),
                 'obstacle_count': self.obstacle_count,
                 'blind_road': self.blind_road,
@@ -189,6 +247,20 @@ class AlertManager:
     def get_speech_log(self):
         with self._lock:
             return list(self.speech_log)
+
+    def shutdown(self):
+        """停止异步 TTS 线程 (发送哨兵 None, 最多等 2 秒)。可重复调用。
+
+        注意: TTS 始终是"独立线程 + 队列" (Phase 19 机制), 此处只做优雅收尾,
+        不涉及同步语音, 主检测循环不会被 TTS 阻塞。
+        """
+        if self._tts_thread is None or not self._tts_thread.is_alive():
+            return
+        try:
+            self._tts_queue.put(None)
+        except Exception:
+            return
+        self._tts_thread.join(timeout=2.0)
 
 
 # 便于外部直接引用

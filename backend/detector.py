@@ -122,9 +122,25 @@ class Detector:
             self._fps = 0.9 * self._fps + 0.1 * inst if self._fps else inst
         return boxes, frame
 
-    def draw(self, frame, boxes, fps=None):
-        """在副本上绘制检测框 + 类别 + confidence (+可选 FPS)。"""
+    def draw(self, frame, boxes, fps=None, occupancy=None):
+        """在副本上绘制检测框 + 类别 + confidence (+可选 FPS)。
+
+        Phase 20: occupancy 不为 None 时, 改由 backend.spatial.draw_occupancy 绘制,
+        以便体现空间关系 (盲道橙框保留 / 疑似占用盲道的障碍物红框 + "占用盲道?")。
+        occupancy=None 时行为与 Phase 17/18/19 完全一致 (向后兼容)。
+        """
         out = frame.copy()
+        if occupancy is not None:
+            # 由空间关系层统一绘制 (原地), 避免与下方循环重复叠加标签
+            from spatial import draw_occupancy
+            draw_occupancy(out, occupancy)
+            if fps is not None:
+                cv2.putText(
+                    out, f"FPS: {fps:.1f}", (10, 26),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2,
+                )
+            return out
+
         for (x1, y1, x2, y2, cls, conf) in boxes:
             name = self.names.get(cls, str(cls))
             # blind_road 主任务用醒目橙色, 其余绿色

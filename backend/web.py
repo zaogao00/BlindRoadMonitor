@@ -147,8 +147,13 @@ def camera_worker():
                 break
 
             boxes, _ = _detector.infer(frame)
-            annotated = _detector.draw(frame, boxes, fps=state["fps_stream"])
-            alert_mgr.update(boxes, _detector.names)
+            # Phase 20: 先做空间关系判定 (AlertManager -> SpatialChecker), 再据结果绘制,
+            # 使画面能体现"哪个是盲道 / 哪个障碍物疑似占用盲道"。
+            status = alert_mgr.update(boxes, _detector.names)
+            annotated = _detector.draw(
+                frame, boxes, fps=state["fps_stream"],
+                occupancy=status.get("occupancy"),
+            )
 
             with _latest_lock:
                 latest_annotated = annotated
@@ -240,6 +245,12 @@ def api_status():
             "alert": False, "alert_message": "", "obstacles": [],
             "obstacle_count": 0, "blind_road": False, "blind_road_count": 0,
             "tts_available": False, "tts_error": "",
+            # Phase 20: 模型未就绪时前端也要能读到一致的数据结构
+            "alert_level": 0, "blocking": False,
+            "occupancy": {
+                "status": "none", "level": 0, "blocking": False,
+                "obstacles": [], "blocking_obstacles": [], "blind_rects": [],
+            },
         })
     return JSONResponse(s)
 

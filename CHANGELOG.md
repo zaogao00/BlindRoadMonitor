@@ -2,6 +2,40 @@
 
 本项目所有重要变更记录于此。格式参考 Keep a Changelog。
 
+## [Phase 20] — 2026-09-04 (障碍物是否占用盲道 — 空间关系与分级预警 COMPLETE — GO)
+
+### Added (新增)
+- **`backend/spatial.py`**: `SpatialChecker` 纯几何模块 — `compute_iou` / `is_center_inside` / `obstacle_overlap_ratio` / `classify` 综合规则 / `draw_occupancy` 视频叠加绘制; **不定义/复制障碍物类别列表** (只接收 AlertManager 用 Phase 19 唯一定义筛好的 bbox); 阈值 `IOU_THRESHOLD=0.10 / OVERLAP_THRESHOLD=0.20 / CENTER_MIN_OVERLAP=0.05` (经 3×3 扫描选定, 非拍脑袋)
+- **`tests/test_spatial.py`**: 单元测试 10 项 — 基础几何 / 场景 A~I (含擦边、误报对照、漏报型细杆、小盲道框大物体) / 3×3 阈值扫描 / AlertManager 分级与双冷却集成 / 性能; **不加载 YOLO、不依赖 GPU**; 10/10 PASS
+- **`scripts/run_phase20_test.py`**: 集成验证 — 盲道组(GT 含盲道 296 张)/对照组(400 张)/loop 连续运行三模式; GT-预测占用一致性对照实验 (分离检测误差与几何规则误差)
+- **`docs/spatial_relation_report.md`**: Phase 20 报告 (20 节, 含 GO 判定与技术限制)
+
+### Changed (修改)
+- **`backend/alert.py`**: `update()` 内调用 `spatial.classify`; 障碍物简化列表带 `blocking` 标记; `get_status()` 增 `alert_level / blocking / occupancy`; **normal/blocking 双冷却** — Level 1→Level 2 升级可立即播报, 不被普通告警冷却阻塞; 新增 `shutdown()` 优雅收尾 TTS 线程
+- **`backend/detector.py`**: `draw()` 增可选 `occupancy` 参数 (默认 None 行为与 Phase 17/18/19 完全一致, 向后兼容)
+- **`backend/web.py`**: worker 先 AlertManager 判定再绘制; `/api/status` 模型未就绪时也返回一致的 occupancy 结构
+- **`frontend/index.html` / `style.css` / `app.js`**: 状态面板增"盲道占用/告警等级"行; Level 1 琥珀横幅 `⚠️ 检测到障碍物` / Level 2 红色横幅 `🔴 障碍物疑似占用盲道，请注意！` + 相关障碍物 (IoU/交叠指标); 障碍物列表"占用盲道?"角标
+
+### Verified (实测)
+- 单元测试 10/10 PASS; SpatialChecker 开销 0.075 ms/帧 (2 盲道框×20 障碍物)
+- 阈值扫描: IoU=0.15 场景 I 漏报 → 上限 0.10; 交叠 0.20 vs 0.30 选 0.20 (安全优先少漏报)
+- 盲道组 (296 张): 盲道检出 88.5%, Level2=44.6%; 对照组 (400 张无盲道 GT): Level2 仅 0.5% (2 例均为 ROD 图, ROD 不标注盲道, 可归因误报=0)
+- GT-预测占用一致性 232/279=83.2%; 47 例不一致逐一归因均来自检测层 (漏检/框偏移), 非几何规则错误
+- Web 冒烟 (图片源): Level 2 / blocking_obstacles (垃圾桶 0.921 交叠 0.699, 摩托车 0.616 交叠 0.216) / TTS 冷却 / MJPEG 200 / 前端新元素 全 PASS
+- 连续 5 分钟: 18,545 帧 / 61.4 FPS (稳定在 55–61, 无持续下降) / 线程数稳定 / 显存恒定 / 零异常
+
+### Limitations (技术边界)
+- 输出为"**疑似占用**"判断: 基于二维 bbox 空间关系, 非 segmentation / 非三维测距 / 非绝对阻挡
+- 系统性误报源: 透视下盲道实际为梯形, bbox 为矩形近似 (表示形式限制, 调阈值无法根治)
+- 数据集事实: blind_road GT 仅约 7% 图像含标注 (test 296/4163)
+
+### Safety (安全约束落实)
+- 不重训 / 不改 best.pt / 不改数据集 / 不删文件 / 未新增任何 AI 模型 (无 ONNX/TensorRT/分割/深度模型)
+- TTS 仍为异步线程+队列, 未重写同步语音
+
+### Git
+- 提交: `Phase 20: blind road spatial relation`
+
 ## [Phase 19] — 2026-09 (Web UI + 障碍物实时提醒 COMPLETE — GO)
 
 ### Added (新增)
