@@ -2,6 +2,36 @@
 
 本项目所有重要变更记录于此。格式参考 Keep a Changelog。
 
+## [Phase 18] — 2026-09-04 (部署/推理性能优化 COMPLETE — GO, 无需 ONNX/TensorRT)
+
+### Added (新增)
+- **`scripts/benchmark_phase18.py`**: 推理侧 Benchmark 运行器 (PyTorch FP32/FP16 计时 250 iter + 20 warmup, avg/P50/P95/FPS; VRAM 双口径 allocator + nvidia-smi; FP32 vs FP16 检测一致性; 盲道全量 GT 图图像级召回验证; 复用沙箱兼容)
+- **`docs/deployment_optimization_report.md`**: 部署/推理性能优化报告 (目标/环境/GPU/版本/模型/配置/FP32/FP16/ONNX/TensorRT/端到端/VRAM 口径/检测一致性/盲道/瓶颈/推荐/Go/Phase19 建议)
+- **`runs/yolov8n_prod_b32/phase18_benchmark/benchmark_stats.json`**: Benchmark 统计 (gitignore, 不入库)
+
+### Benchmark (RTX 5070, imgsz=640 / batch=1 / device=0)
+- **PyTorch FP32**: avg **9.501 ms** → **105.25 FPS**; P50 9.141 / P95 10.525; 真实 GPU 占用 **216 MiB** (nvidia-smi); allocator 峰值 51.6 MB
+- **PyTorch FP16**: avg **10.143 ms** → **98.59 FPS**; P50 9.426 / P95 10.671; 真实 GPU 占用 218 MiB
+- **结论**: 本机 Blackwell 上 FP16 反略慢于 FP32 → **保留 FP32** (更简单、无精度风险、略快)
+
+### Verified (检测一致性 + 盲道)
+- **FP32 vs FP16**: 10 张多类测试图检测框数完全一致 (32=32), 无系统性退化
+- **blind_road 图像级召回** (全部 296 张 GT 图): **0.878 @0.25** / **0.899 @0.15** → PASS (与 Phase 16 R=0.802 一致, 非模型失效)
+- CUDA error 无 / OOM 无
+
+### Decision (Go / No-Go)
+- **GO (无需继续优化)**: 模型推理 >100 FPS, 端到端 27–28 FPS (瓶颈在摄像头读帧 ~35ms, 非模型, 模型有 4 倍余量), 检测正常, GPU 占用低, 稳定
+- **无需 ONNX**: PyTorch+GPU 已满足实时, 导出无收益 (规格 §12/§15)
+- **无需 TensorRT**: 同 (规格 §13)
+
+### Safety (安全约束落实)
+- 不重训 / 不改 best.pt / 不导出 ONNX-TensorRT / 不修改数据集 / 不删 raw/processed/runs
+- 未装 CUDA Toolkit / TensorRT; 磁盘全程 NORMAL (73.38 GB)
+- 未 push (按用户约束, 仅本地 `git commit "Phase 18: deployment optimization"`)
+
+### Git
+- 提交: `Phase 18: deployment optimization`
+
 ## [Phase 17] — 2026-09-03 (实时摄像头检测 COMPLETE — 链路 PASS, headless 验证)
 
 ### Added (新增)

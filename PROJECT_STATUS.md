@@ -3,7 +3,7 @@
 ## Phase 00 — 项目安全与磁盘管理初始化
 
 ### 当前状态 (Current Status)
-- **阶段**: Phase 00 / 02–09 已完成 ✅；**Phase 10 数据集分析 已完成 ✅**；**Phase 11 YOLO 数据集转换 已完成 ✅** (17,908 图 / 195,719 实例 / 26 类)；**Phase 12 可视化质量检查 已完成 ✅** (120 张全部正常)；**Phase 13 小规模训练验证 已完成 ✅** (YOLOv8n, 450 图 / 10 epochs / mAP50 0.301 复评)；**Phase 14 训练结果分析 已完成 ✅** — 盲道类 mAP50 **0.662** (10 epochs), 四项判断正常；**Phase 15 全量正式训练 已完成 ✅** (YOLOv8n, 17,908 图 / 200 epochs / **test mAP50 0.776** / **盲道类 mAP50 0.849** ✅ 达成 ≥0.75)；**Phase 16 推理验证 已完成 ✅** (best.pt 复现 test mAP50 0.776 / 盲道 mAP50 0.849 / GPU 88 FPS / 显存 4.07 GB；判定 **GO** 进入 Phase 17)；**Phase 17 实时摄像头检测 已完成 ✅** (headless 验证: best.pt 加载/摄像头打开/连续读帧/实时推理+绘制/模型推理 78.6 FPS/GPU 无错无 OOM；链路 PASS, 可见窗口与物理摄像头实景待用户本地确认)
+- **阶段**: Phase 00 / 02–09 已完成 ✅；**Phase 10 数据集分析 已完成 ✅**；**Phase 11 YOLO 数据集转换 已完成 ✅** (17,908 图 / 195,719 实例 / 26 类)；**Phase 12 可视化质量检查 已完成 ✅** (120 张全部正常)；**Phase 13 小规模训练验证 已完成 ✅** (YOLOv8n, 450 图 / 10 epochs / mAP50 0.301 复评)；**Phase 14 训练结果分析 已完成 ✅** — 盲道类 mAP50 **0.662** (10 epochs), 四项判断正常；**Phase 15 全量正式训练 已完成 ✅** (YOLOv8n, 17,908 图 / 200 epochs / **test mAP50 0.776** / **盲道类 mAP50 0.849** ✅ 达成 ≥0.75)；**Phase 16 推理验证 已完成 ✅** (best.pt 复现 test mAP50 0.776 / 盲道 mAP50 0.849 / GPU 88 FPS / 显存 4.07 GB；判定 **GO** 进入 Phase 17)；**Phase 17 实时摄像头检测 已完成 ✅** (headless 验证: best.pt 加载/摄像头打开/连续读帧/实时推理+绘制/模型推理 78.6 FPS/GPU 无错无 OOM；链路 PASS, 可见窗口与物理摄像头实景待用户本地确认)；**Phase 18 部署/推理性能优化 已完成 ✅** (PyTorch FP32 9.5ms→105FPS / FP16 10.1ms→98.6FPS, 真实GPU占用216MiB; FP32=FP16检测一致; 盲道图像级召回0.878 PASS; 端到端27–28FPS(瓶颈在摄像头读帧); 判定 GO, 无需 ONNX/TensorRT)
 - **整体状态**: 数据与训练管线验证通过, 磁盘状态 **NORMAL**, 可进入全量正式训练 (Phase 15 候选)。
 - **硬件**: NVIDIA RTX 5070 (8GB VRAM)
 - **项目根目录**: `D:\BlindRoadMonitor`
@@ -229,8 +229,19 @@
 - **实施修复 (环境, 非模型)**: 无 (直接复用 Phase 13/15/16 沙箱兼容, 未重新发明)。
 - **输出文档**: `docs/camera_report.md` (完整报告)。
 
+### Phase 18 — 部署 / 推理性能优化 (已完成 ✅; 2026-09-04, headless 验证)
+- **性质**: 正式模型 `best.pt` 推理侧性能基准 + 检测一致性 + 部署形态决策; **不重训 / 不改 best.pt / 不导出 ONNX-TensorRT / 不进下一阶段**。
+- **工具**: `scripts/benchmark_phase18.py` (FP32/FP16 计时 250 iter+20 warmup, avg/P50/P95/FPS, VRAM 双口径 allocator+nvidia-smi; FP32 vs FP16 检测一致性; 盲道全量 GT 图召回验证)。
+- **配置**: imgsz=640 / batch=1 / device=0 / workers=0 / conf=0.25 / iou=0.45。
+- **结果**: PyTorch **FP32 9.501ms→105.25 FPS** (真实 GPU 216 MiB); **FP16 10.143ms→98.59 FPS** (本机 Blackwell 上 FP16 反略慢, 保留 FP32); FP32=FP16 检测框数完全一致 (32=32), 无退化; **盲道图像级召回 0.878@0.25 / 0.899@0.15 (296 张 GT 图) PASS**; 端到端 27–28 FPS (本沙箱虚拟摄像头 28.1 / 用户本机 27.2), 瓶颈在摄像头读帧 (~35ms) 非模型; CUDA 无错无 OOM。
+- **判定**: **GO (无需继续优化)** — 模型推理 >100 FPS, 端到端接近 30 达标线, 检测正常, GPU 占用低, 稳定; 按规格 §15 当前 PyTorch+GPU 已满足实时需求, **无需 ONNX/TensorRT**。
+- **产物**: `docs/deployment_optimization_report.md` (完整报告) + `runs/yolov8n_prod_b32/phase18_benchmark/` (gitignore)。
+- **实施修复 (环境, 非模型)**: 无。
+- **输出文档**: `docs/deployment_optimization_report.md` (完整报告)
+
 ### 下一步 (Next Steps)
-- **Phase 18 候选 — 摄像头告警/语音(TTS)**: 给盲人用的系统画面叠加无效, 需音频提醒; 对 blind_road 低置信阈值 + 告警降级; 长尾弱类暂不作高可信事件 (Phase 17 已完成链路验证, 见上)。
+- **Phase 18 已完成 ✅ — 部署/推理性能优化**: PyTorch FP32 9.5ms→105FPS (FP16 10.1ms→98.6FPS, 本机 FP16 略慢故保留 FP32); 真实 GPU 占用 216MiB; FP32=FP16 检测一致; 盲道图像级召回 0.878@0.25 PASS; 端到端 27–28 FPS (瓶颈在摄像头读帧, 非模型); 判定 GO, 无需 ONNX/TensorRT (详见 docs/deployment_optimization_report.md)。
+- **Phase 19 候选 — 摄像头告警/语音(TTS)**: 给盲人用的系统画面叠加无效, 需音频提醒; 对 blind_road 低置信阈值 + 告警降级; 长尾弱类暂不作高可信事件 (Phase 17 链路 + Phase 18 性能均已就绪, 见上)。
 - **长尾优化 (可选)**: truck / guard_rail / bicycle / bus / dog / plant_pot mAP50 偏低 (与 437:1 长尾分布一致, 非标签错误) → 过采样 / 类别权重 / 补充数据源。
 - **更大模型 (可选)**: YOLOv8s (batch 16–24, 8GB 仍可) 追求更高精度。
 - **部署 (可选)**: 仅当部署端需要时导出 ONNX / TensorRT(INT8), Phase 16/17 按约束未导出。
