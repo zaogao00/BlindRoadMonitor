@@ -64,8 +64,18 @@ class Detector:
         self.iou = iou
 
         # 设备可用性检查
-        if str(device) != "cpu" and not torch.cuda.is_available():
-            raise RuntimeError(f"CUDA 不可用, 无法使用 GPU 推理 (device={device})")
+        # Phase 21: 必须同时检查 is_available() 与 device_count()。
+        # 实测存在 is_available()==True 但 device_count()==0 的异常状态
+        # (本机 CUDA_VISIBLE_DEVICES="" 时即如此); 只查前者会误判为"GPU 可用",
+        # 表现为"模型加载成功、一推理就失败"。两个条件都满足才算可用。
+        if str(device) != "cpu":
+            cuda_ok = torch.cuda.is_available() and torch.cuda.device_count() > 0
+            if not cuda_ok:
+                raise RuntimeError(
+                    f"CUDA 不可用, 无法使用 GPU 推理 "
+                    f"(device={device}, is_available={torch.cuda.is_available()}, "
+                    f"device_count={torch.cuda.device_count()})"
+                )
 
         try:
             self.model = YOLO(weights)

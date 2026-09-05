@@ -32,6 +32,10 @@ CONFIG = {
     "imgsz": 640,
     "device": "0",
     "iou": 0.45,
+    # Phase 21: 请求分辨率 (软设置 — 摄像头不支持则沿用其自身协商值, 不强制、不失败)。
+    # 故意**不设置 FPS**: 允许摄像头自行协商帧率, 避免锁死 60FPS 导致打开失败或卡顿。
+    "width": 640,
+    "height": 480,
 }
 
 # 全局运行状态
@@ -43,6 +47,9 @@ state = {
     "fps_stream": 0.0,
     "fps_model": 0.0,
     "started_at": 0.0,
+    # Phase 21: 摄像头实际协商出的分辨率 (软设置后回读, 用于排障与状态显示)
+    "resolution": "",
+    "camera_fps": 0.0,
 }
 latest_annotated = None
 _latest_lock = threading.Lock()
@@ -90,7 +97,8 @@ def _resolve_source(src):
     cams = list_cameras()
     if cams and idx not in [c["index"] for c in cams]:
         print(f"[web][warn] idx {idx} 不在枚举摄像头列表 {cams} 中, 仍尝试打开")
-    cap = open_camera(idx)
+    # Phase 21: 软请求分辨率 (摄像头不支持时保留自身默认值, 不会因此失败)
+    cap = open_camera(idx, width=CONFIG.get("width"), height=CONFIG.get("height"))
     return "camera", cap
 
 
@@ -117,7 +125,18 @@ def camera_worker():
     try:
         kind, src = _resolve_source(CONFIG["source"])
         state["camera"] = True
-        print(f"[web][worker] 源已打开: kind={kind}")
+        # Phase 21: 回读摄像头实际协商结果 (分辨率/FPS 只记录, 不强制)
+        if kind == "camera" and src is not None:
+            try:
+                w = int(src.get(cv2.CAP_PROP_FRAME_WIDTH))
+                h = int(src.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                fps = float(src.get(cv2.CAP_PROP_FPS) or 0.0)
+                state["resolution"] = f"{w}x{h}"
+                state["camera_fps"] = round(fps, 1)
+            except Exception:
+                pass
+        print(f"[web][worker] 源已打开: kind={kind} "
+              f"resolution={state['resolution'] or '-'} fps={state['camera_fps'] or '-'}")
     except Exception as e:
         state["camera"] = False
         state["camera_error"] = f"{type(e).__name__}: {str(e)[:200]}"
@@ -219,6 +238,24 @@ def index():
         return HTMLResponse(f"<h1>index.html 缺失</h1><p>{e}</p>", status_code=500)
 
 
+@app.get("/api/health")
+def api_health():
+    """Phase 21 — 存活探针: 只要 HTTP 服务本身活着就返回 200。
+
+    与 /api/status 的区别: health **不因摄像头/模型故障而变红**, 用于
+    "服务是否起来了"的判断; 子系统状态请看 /api/status。
+    """
+    return JSONResponse({
+        "status": "ok",
+        "service": "BlindRoadMonitor",
+        "version": "Phase 21",
+        "uptime": round(time.time() - state["started_at"], 1) if state["started_at"] else 0.0,
+        "camera": state["camera"],
+        "model": state["model"],
+        "worker_running": running.is_set(),
+    })
+
+
 @app.get("/api/status")
 def api_status():
     s = {
@@ -228,6 +265,9 @@ def api_status():
         "camera_error": state["camera_error"],
         "fps_stream": round(state["fps_stream"], 1),
         "fps_model": round(state["fps_model"], 1),
+        # Phase 21: 摄像头实际协商结果 (软设置, 可能不是请求的 640x480)
+        "resolution": state["resolution"],
+        "camera_fps": state["camera_fps"],
         "started_at": state["started_at"],
         "uptime": round(time.time() - state["started_at"], 1) if state["started_at"] else 0.0,
         "config": {
@@ -236,6 +276,8 @@ def api_status():
             "imgsz": CONFIG["imgsz"],
             "conf": CONFIG["conf"],
             "device": CONFIG["device"],
+            "width": CONFIG.get("width"),
+            "height": CONFIG.get("height"),
         },
     }
     if alert_mgr is not None:

@@ -3,7 +3,7 @@
 ## Phase 00 — 项目安全与磁盘管理初始化
 
 ### 当前状态 (Current Status)
-- **阶段**: Phase 00 / 02–09 已完成 ✅；**Phase 10 数据集分析 已完成 ✅**；**Phase 11 YOLO 数据集转换 已完成 ✅** (17,908 图 / 195,719 实例 / 26 类)；**Phase 12 可视化质量检查 已完成 ✅** (120 张全部正常)；**Phase 13 小规模训练验证 已完成 ✅** (YOLOv8n, 450 图 / 10 epochs / mAP50 0.301 复评)；**Phase 14 训练结果分析 已完成 ✅** — 盲道类 mAP50 **0.662** (10 epochs), 四项判断正常；**Phase 15 全量正式训练 已完成 ✅** (YOLOv8n, 17,908 图 / 200 epochs / **test mAP50 0.776** / **盲道类 mAP50 0.849** ✅ 达成 ≥0.75)；**Phase 16 推理验证 已完成 ✅** (best.pt 复现 test mAP50 0.776 / 盲道 mAP50 0.849 / GPU 88 FPS / 显存 4.07 GB；判定 **GO** 进入 Phase 17)；**Phase 17 实时摄像头检测 已完成 ✅** (headless 验证: best.pt 加载/摄像头打开/连续读帧/实时推理+绘制/模型推理 78.6 FPS/GPU 无错无 OOM；链路 PASS, 可见窗口与物理摄像头实景待用户本地确认)；**Phase 18 部署/推理性能优化 已完成 ✅** (PyTorch FP32 9.5ms→105FPS / FP16 10.1ms→98.6FPS, 真实GPU占用216MiB; FP32=FP16检测一致; 盲道图像级召回0.878 PASS; 端到端27–28FPS(瓶颈在摄像头读帧); 判定 GO, 无需 ONNX/TensorRT)；**Phase 19 Web UI + 障碍物实时提醒 已完成 ✅** (FastAPI+uvicorn+pyttsx3; 单 camera worker 线程 + MJPEG /video_feed + /api/status; 视觉警告横幅 + TTS 语音提醒(冷却 2.5s / 多障碍物去重合并); 盲道 Detected/Not Detected; 默认 conf=0.20; 障碍物检测/视觉提醒/TTS/冷却/多障碍物去重/连续运行 全 PASS; 判定 GO; 空间关系判断留 Phase 20)；**Phase 20 空间关系判断与分级预警 已完成 ✅** (`backend/spatial.py` SpatialChecker: IoU+中心点+交叠比三条件规则, 阈值经 3×3 扫描选定 IoU≥0.10/交叠≥0.20; 三级告警 NONE/NORMAL/BLOCKING_SUSPECTED; normal/blocking 双冷却实现 Level1→Level2 立即升级; TTS 复用 Phase 19 异步线程+队列; 视频叠加"占用盲道?"红框标注; /api/status 增 occupancy/alert_level/blocking; 单元测试 10/10 PASS (0.075ms/帧); 真实图片盲道组 Level2=44.6%/对照组误报仅 0.5%/GT-预测占用一致性 83.2% (不一致均归因检测层误差); 连续 5 分钟 61.4 FPS 无异常; 判定 **GO**; 注意: 输出为"疑似占用"判断, 非 segmentation/绝对阻挡; 数据集 blind_road GT 仅约 7% 图像含标注)
+- **阶段**: Phase 00 / 02–09 已完成 ✅；**Phase 10 数据集分析 已完成 ✅**；**Phase 11 YOLO 数据集转换 已完成 ✅** (17,908 图 / 195,719 实例 / 26 类)；**Phase 12 可视化质量检查 已完成 ✅** (120 张全部正常)；**Phase 13 小规模训练验证 已完成 ✅** (YOLOv8n, 450 图 / 10 epochs / mAP50 0.301 复评)；**Phase 14 训练结果分析 已完成 ✅** — 盲道类 mAP50 **0.662** (10 epochs), 四项判断正常；**Phase 15 全量正式训练 已完成 ✅** (YOLOv8n, 17,908 图 / 200 epochs / **test mAP50 0.776** / **盲道类 mAP50 0.849** ✅ 达成 ≥0.75)；**Phase 16 推理验证 已完成 ✅** (best.pt 复现 test mAP50 0.776 / 盲道 mAP50 0.849 / GPU 88 FPS / 显存 4.07 GB；判定 **GO** 进入 Phase 17)；**Phase 17 实时摄像头检测 已完成 ✅** (headless 验证: best.pt 加载/摄像头打开/连续读帧/实时推理+绘制/模型推理 78.6 FPS/GPU 无错无 OOM；链路 PASS, 可见窗口与物理摄像头实景待用户本地确认)；**Phase 18 部署/推理性能优化 已完成 ✅** (PyTorch FP32 9.5ms→105FPS / FP16 10.1ms→98.6FPS, 真实GPU占用216MiB; FP32=FP16检测一致; 盲道图像级召回0.878 PASS; 端到端27–28FPS(瓶颈在摄像头读帧); 判定 GO, 无需 ONNX/TensorRT)；**Phase 19 Web UI + 障碍物实时提醒 已完成 ✅** (FastAPI+uvicorn+pyttsx3; 单 camera worker 线程 + MJPEG /video_feed + /api/status; 视觉警告横幅 + TTS 语音提醒(冷却 2.5s / 多障碍物去重合并); 盲道 Detected/Not Detected; 默认 conf=0.20; 障碍物检测/视觉提醒/TTS/冷却/多障碍物去重/连续运行 全 PASS; 判定 GO; 空间关系判断留 Phase 20)；**Phase 20 空间关系判断与分级预警 已完成 ✅** (`backend/spatial.py` SpatialChecker: IoU+中心点+交叠比三条件规则, 阈值经 3×3 扫描选定 IoU≥0.10/交叠≥0.20; 三级告警 NONE/NORMAL/BLOCKING_SUSPECTED; normal/blocking 双冷却实现 Level1→Level2 立即升级; TTS 复用 Phase 19 异步线程+队列; 视频叠加"占用盲道?"红框标注; /api/status 增 occupancy/alert_level/blocking; 单元测试 10/10 PASS (0.075ms/帧); 真实图片盲道组 Level2=44.6%/对照组误报仅 0.5%/GT-预测占用一致性 83.2% (不一致均归因检测层误差); 连续 5 分钟 61.4 FPS 无异常; 判定 **GO**; 注意: 输出为"疑似占用"判断, 非 segmentation/绝对阻挡; 数据集 blind_road GT 仅约 7% 图像含标注); **Phase 21 最终打包与部署 已完成 ✅ (COMPLETE / CONDITIONAL GO)** — venv+start_web.bat 部署方式, 新增 /api/health 探针, 部署测试 23 项(22 PASS/1 CONDITIONAL), 不做 EXE; 真实扬声器/可见窗口/物理摄像头实景待用户 Windows 11 实机确认
 - **整体状态**: 数据与训练管线验证通过, 磁盘状态 **NORMAL**, 可进入全量正式训练 (Phase 15 候选)。
 - **硬件**: NVIDIA RTX 5070 (8GB VRAM)
 - **项目根目录**: `D:\BlindRoadMonitor`
@@ -250,8 +250,27 @@
 - **产物**: `docs/web_ui_report.md` (完整报告)。
 - **输出文档**: `docs/web_ui_report.md` (完整报告)
 
+### Phase 20 — 障碍物是否占用盲道（空间关系与分级预警, 已完成 ✅, GO）
+- **性质**: 在 Phase 19 的 AlertManager 上增加 SpatialChecker, 基于二维 bbox 空间关系判定"疑似占用盲道"; **不重训 / 不改 best.pt / 不进下一阶段**。
+- **新增**: `backend/spatial.py`（SpatialChecker: compute_iou / is_center_inside / obstacle_overlap_ratio / classify 三条件 OR 规则 / draw_occupancy; **不复制障碍物类别列表**, 复用 Phase 19 AlertManager 定义）/ `tests/test_spatial.py`（10/10 PASS, 纯几何不依赖 GPU）/ `scripts/run_phase20_test.py` / `docs/spatial_relation_report.md`
+- **阈值**: `IOU_THRESHOLD=0.10 / OVERLAP_THRESHOLD=0.20 / CENTER_MIN_OVERLAP=0.05`（经 3×3 扫描选定, 安全优先少漏报）
+- **告警分级**: Level 0 NONE / Level 1 NORMAL_OBSTACLE / Level 2 BLOCKING_SUSPECTED（"疑似占用盲道"）; normal/blocking 双冷却, L1→L2 升级立即播报; TTS 复用 Phase 19 异步线程+队列
+- **Verified**: 单元测试 10/10; 盲道组 Level2=44.6% / 对照组误报仅 0.5%; GT-预测占用一致性 83.2%（不一致均归因检测层）; 连续 5 分钟 61.4 FPS 无异常; **GO**
+- **限制**: 输出为"疑似占用"判断, 非 segmentation / 非三维测距 / 非绝对阻挡; blind_road GT 仅约 7% 图像含标注
+- **Git**: `Phase 20: blind road spatial relation`（已推送）
+
+### Phase 21 — 最终打包与部署（已完成 ✅, COMPLETE / CONDITIONAL GO）
+- **性质**: 将 Phase 00–20 累积系统整理为可实际启动/使用/演示的最终部署版本; **不重训 / 不改 best.pt / 不进 Phase 22 / 不自动 push**。
+- **新增**: `scripts/start_web.bat`（一键启动, 失败 pause 不关窗, 不提权/不改环境变量/不自动装依赖）/ `scripts/run_deployment_check.py`（Test1–6 + E1–E8）/ `backend/web.py` 增 `GET /api/health` 存活探针 + 软分辨率配置 / `backend/detector.py` 修复 GPU 检查（`is_available() and device_count()>0`, 消 E4 假阳性）/ `scripts/run_web.py` 增 `--width/--height` / `README.md` / `PROJECT_PLAN.md` / `docs/deployment_guide.md` / `docs/user_manual.md` / `docs/phase21_deployment_report.md`
+- **部署形态**: `venv + start_web.bat`（**不做 EXE**: PyTorch CUDA/Ultralytics/OpenCV/SAPI 打包体积与兼容性风险高, 收益已被 bat 覆盖）
+- **Verified**: 部署测试 23 项 = 22 PASS / 0 FAIL / 1 CONDITIONAL; SpatialChecker 10/10; Web 四端点 HTTP 200（含 /api/health）; 摄像头 640×480 连续 90s 无错无 OOM; headless 截图证实全链路; 八项异常恢复全 PASS
+- **CONDITIONAL（待用户 Windows 11 实机确认, 不伪造 PASS）**: ① 真实扬声器语音播报 ② 可见窗口与物理摄像头实景 ③ 双击 bat 一键启动体验
+- **Git**: `Phase 21: deployment packaging and finalization`（**仅本地 commit, 未 push**, 按用户约定）
+- **下一步**: 不自行进入 Phase 22, 等待下一步指令
+
 ### 下一步 (Next Steps)
-- **Phase 19 已完成 ✅ — Web UI + 障碍物实时提醒**: FastAPI+uvicorn+pyttsx3; 单 camera worker + MJPEG + /api/status; 视觉警告横幅 + TTS(冷却2.5s/去重); 盲道 Detected/Not Detected; 默认 conf=0.20; 障碍物检测/视觉提醒/TTS/冷却/多障碍物/连续运行 全 PASS, GO (详见 docs/web_ui_report.md)。
+- **Phase 21 已完成 ✅ — 最终打包与部署 (COMPLETE / CONDITIONAL GO)**: venv+start_web.bat 部署; /api/health 探针; 部署测试 23 项(22 PASS/1 CONDITIONAL); README/deployment_guide/user_manual/phase21_deployment_report 完整; 不做 EXE; 真实扬声器/可见窗口/物理摄像头实景待用户 Windows 11 实机确认 (详见 docs/phase21_deployment_report.md)
+- **Phase 22 候选（未启动, 等待指令）**: ① 盲道分割(segmentation)根治"梯形 bbox 矩形近似"系统性误报 ② 多摄像头/视频批量分析 ③ 告警记录与回放 ④ 现场可调阈值面板。
 - **Phase 20 候选 — 障碍物是否占用盲道 (空间关系)**: `blind_road bbox + obstacle bbox` → IoU/中心距离/投影 → 判定"疑似占用盲道" → 高优先级提醒 (`🔴 障碍物疑似占用盲道，请注意！`); 在 Phase 19 AlertManager 上增加 SpatialChecker, 告警分级 (普通障碍物 / 占用盲道); 长尾弱类可补充数据 (Phase 16 已记录)。
 - **长尾优化 (可选)**: truck / guard_rail / bicycle / bus / dog / plant_pot mAP50 偏低 (与 437:1 长尾分布一致, 非标签错误) → 过采样 / 类别权重 / 补充数据源。
 - **更大模型 (可选)**: YOLOv8s (batch 16–24, 8GB 仍可) 追求更高精度。

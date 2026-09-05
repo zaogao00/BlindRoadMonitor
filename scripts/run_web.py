@@ -14,6 +14,9 @@ camera worker 在 app lifespan 启动时拉起 (单摄像头/源, 规格 §18)�
   # 指定端口 / 置信度
   python scripts/run_web.py --port 8000 --conf 0.20
 
+  # Phase 21: 指定摄像头请求分辨率 (软设置; 摄像头不支持则沿用其自身协商值)
+  python scripts/run_web.py --source 0 --width 1280 --height 720
+
   # 也可直接用 uvicorn 模块:
   python -m uvicorn backend.web:app --host 127.0.0.1 --port 8000
 """
@@ -42,6 +45,11 @@ def main():
     ap.add_argument("--imgsz", type=int, default=640)
     ap.add_argument("--device", default="0")
     ap.add_argument("--iou", type=float, default=0.45)
+    # Phase 21: 分辨率软设置 (默认 640x480 = 已验证配置; 不锁 FPS, 由摄像头自行协商)
+    ap.add_argument("--width", type=int, default=640,
+                    help="请求摄像头宽度 (软设置, 默认 640)")
+    ap.add_argument("--height", type=int, default=480,
+                    help="请求摄像头高度 (软设置, 默认 480)")
     args = ap.parse_args()
 
     # 写入全局配置, camera worker (lifespan) 启动后读取
@@ -51,9 +59,13 @@ def main():
     web.CONFIG["imgsz"] = args.imgsz
     web.CONFIG["device"] = args.device
     web.CONFIG["iou"] = args.iou
+    web.CONFIG["width"] = args.width
+    web.CONFIG["height"] = args.height
 
     print(f"[web] 启动 http://{args.host}:{args.port}")
     print(f"[web] 源={args.source}  model={args.model}  conf={args.conf}  imgsz={args.imgsz}")
+    print(f"[web] 请求分辨率={args.width}x{args.height} (软设置; 实际以 /api/status 的 resolution 为准)")
+    print(f"[web] 打开浏览器访问 http://127.0.0.1:{args.port}  (退出: 在本窗口按 Ctrl+C)")
 
     import uvicorn
     uvicorn.run(web.app, host=args.host, port=args.port, log_level="warning")

@@ -2,6 +2,40 @@
 
 本项目所有重要变更记录于此。格式参考 Keep a Changelog。
 
+## [Phase 21] — 2026-09-05 (最终打包与部署 COMPLETE / CONDITIONAL GO — 不做 EXE)
+
+### Added (新增)
+- **`scripts/start_web.bat`**: Windows 一键启动 — 自动进项目目录、用项目 venv 启动 `run_web.py`; 失败 `pause` 不关窗; **不要求管理员权限 / 不修改系统环境变量 / 不自动安装依赖 / 不修改项目文件**
+- **`scripts/run_deployment_check.py`**: 部署测试框架 — Test1 模型/CUDA、Test2 test_spatial 10/10、Test3 Web 四端点(含 /api/health)、Test4 摄像头连续读取、Test5 headless 浏览器、Test6 TTS(异步机制 PASS / 真实扬声器 CONDITIONAL); 异常恢复 E1 摄像头不存在 / E2 被占用 / E3 模型不存在 / E4 GPU 不可用 / E5 TTS 失败 / E6 客户端断开 / E7 反复刷新 / E8 运行数分钟
+- **`backend/web.py`**: 新增 `GET /api/health` 存活探针（不随摄像头/模型故障变红）; `CONFIG` 增软分辨率 `width/height`（默认 640×480, 不锁 FPS）; `/api/status` 回传实际协商分辨率
+- **`backend/detector.py`**: GPU 可用性检查由 `torch.cuda.is_available()` 改为 `torch.cuda.is_available() and torch.cuda.device_count() > 0`（修复 `CUDA_VISIBLE_DEVICES=""` 时"假 model=True"健壮性缺口, E4）
+- **`scripts/run_web.py`**: argparse 增 `--width` / `--height`（软分辨率, 默认 640×480）
+- **`README.md`** / **`PROJECT_PLAN.md`** / **`docs/deployment_guide.md`**(10 节) / **`docs/user_manual.md`**(5 步+退出+局限) / **`docs/phase21_deployment_report.md`**(§1–13)
+
+### Changed (修改)
+- **`requirements.txt`**: 显式补齐 `fastapi` / `uvicorn` / `pyttsx3` 及真实安装版本; 保留 cu128 wheel 说明; **不加入** TensorRT / ONNX Runtime / 分割 / 深度 / 大型 TTS / React / Vue
+
+### Verified (实测)
+- 部署测试 23 项 = **22 PASS / 0 FAIL / 1 CONDITIONAL**
+- Test1 CUDA/可用 + best.pt 加载(5.98 MB, nc=26) PASS; Test2 单元测试 10/10 PASS
+- Test3 GET / + /api/health + /api/status + /video_feed 全 HTTP 200
+- Test4 摄像头 640×480 连续 90s: fps_stream 13.3~29.9, 无 read failure / 无 CUDA error / 无 OOM
+- Test5 headless 截图 557 KB → `outputs/phase21/web_ui_135952.png` 证实全链路(真实摄像头+YOLO 框+状态面板+琥珀横幅)
+- Test6 TTS 异步线程+队列未阻塞主循环, L1→L2 升级立即播报, 冷却内不刷屏 PASS; 真实扬声器 **CONDITIONAL**(沙箱无音频设备)
+- E1–E8 八项异常恢复全 PASS(含 E4 GPU 不可用给出清晰中文错误, 不再"假可用一推理就崩")
+
+### Decision (Go / No-Go)
+- **COMPLETE / CONDITIONAL GO**: 全部硬性 GO 标准满足, 0 FAIL; 仅"真实扬声器 / 可见窗口 / 物理摄像头实景 / 双击 bat 体验"需用户 Windows 11 实机确认(不伪造 PASS)
+- 部署形态定为 **venv + start_web.bat, 不做 EXE**(PyInstaller 打包 PyTorch CUDA 体积与兼容性风险高, 收益已被 bat 覆盖)
+
+### Safety (安全约束落实)
+- 不重训 / 不改 best.pt / 不换模型 / 不做 segmentation / 未装 CUDA Toolkit / 未强制 TensorRT / 未强制 ONNX / 未下载大模型 / 未删用户文件 / 未自动清理 D 盘
+- D 盘剩余 74 GB → NORMAL
+- 未自动 git push(按用户约定, 仅本地 commit)
+
+### Git
+- 提交: `Phase 21: deployment packaging and finalization`（仅本地, 未 push）
+
 ## [Phase 20] — 2026-09-04 (障碍物是否占用盲道 — 空间关系与分级预警 COMPLETE — GO)
 
 ### Added (新增)

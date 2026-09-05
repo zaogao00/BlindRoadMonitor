@@ -9,6 +9,23 @@
 #
 # 注意: torch / torchvision / torchaudio 的 cu128 wheel 来自 PyTorch 官方索引,
 #       若需重装请附加 --index-url https://download.pytorch.org/whl/cu128
+#
+# Phase 21 复核: 本项目【不需要】CUDA Toolkit / TensorRT / ONNX Runtime /
+#                分割模型 / 深度模型 / 大型 TTS 模型。PyTorch cu128 wheel 自带
+#                CUDA 运行时, 无需单独安装 CUDA Toolkit。
+
+# --- Web UI (FastAPI) ---   [Phase 19 引入, Phase 21 复核]
+fastapi==0.141.1
+uvicorn==0.52.4
+starlette==1.6.0
+pydantic==2.13.5
+h11==0.16.0
+anyio==4.14.2
+
+# --- TTS 语音提醒 (Windows SAPI) ---   [Phase 19 引入, Phase 21 复核]
+pyttsx3==2.99
+comtypes==1.4.16
+pywin32==312
 
 # --- 深度学习框架 (GPU) ---
 torch==2.11.0+cu128
