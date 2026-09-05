@@ -2,6 +2,27 @@
 
 本项目所有重要变更记录于此。格式参考 Keep a Changelog。
 
+## [Fix] TTS 后续播报无声 — 2026-09-05 (绕过 pyttsx3, 改用原生 SAPI 同步播放)
+
+### Changed (修改)
+- **`backend/alert.py`**: TTS worker 不再使用 pyttsx3, 改为 `win32com.client.Dispatch("SAPI.SpVoice")` + `voice.Speak(text, 0)` **同步播放** (阻塞到音频真正送完); worker 线程内 `pythoncom.CoInitialize()` / `CoUninitialize()`。pywin32 已在项目依赖中, **未新增依赖**。
+  - `TTS_RATE` 由 pyttsx3 的 wpm=160 改为 SAPI `Rate=1` (范围 -10..10)
+  - 同步新增 `_TTS_ENGINE_LOCK` 注释与 `_init_tts` 注释, 移除 pyttsx3 相关描述
+- 完整保留: latest-message-wins 单槽位 / NORMAL_COOLDOWN=5.0 / BLOCKING_COOLDOWN=2.5 / STABLE_WINDOW=0.5 去抖 / Level 2 优先 / NONE 清空 pending / 异常记录不吞 (失败句后重建 voice 一次, 非每消息 init)
+
+### Root Cause (根因)
+- pyttsx3 2.99 + Python 3.13 + Windows 11 下, 即使持久 engine + `runAndWait()` 正常返回, 其事件循环/状态机也会在首句之后让 SAPI 底层音频管线静默失效 (日志 `speaking start/end` 全绿却无声)。这是 pyttsx3 封装层问题, 非 SAPI 本身 / 队列 / 冷却 / YOLO / Web 问题。
+
+### Verified (实测 — 用户 Windows 11 实机)
+- 遮挡摄像头后再拿开 → **可继续播报** (离开再进入场景通过)
+- 用图片给摄像头 → **可识别并播报** (换图片场景通过)
+- Level 2 "障碍物疑似占用盲道" 在前序普通播报进行中可插入并后播 (优先级正确)
+- NONE 清空生效: 遮摄像头后旧 pending 被丢弃, 不再续播过时消息
+- 沙箱逻辑层: `tests/test_spatial.py` 10/10; A~G 模拟 ALL PASS (含 180s 稳定 / voice 持久复用 / 线程无泄漏)
+
+### Git
+- 仅本地 commit, 未 push (按用户约定, push 前再确认)
+
 ## [Phase 21] — 2026-09-05 (最终打包与部署 COMPLETE / CONDITIONAL GO — 不做 EXE)
 
 ### Added (新增)
