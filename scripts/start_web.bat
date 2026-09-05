@@ -1,56 +1,40 @@
 @echo off
-rem ============================================================
-rem  BlindRoadMonitor â€” ä¸€é”®å¯åŠ¨è„šæœ¬ (Phase 21)
-rem
-rem  ä½œç”¨: ç”¨é¡¹ç›®è‡ªå¸¦è™šæ‹Ÿç¯å¢ƒå¯åŠ¨ FastAPI Web æœåŠ¡å¹¶æ‰“å¼€æç¤ºã€‚
-rem  çº¦æŸ: ä¸è¦æ±‚ç®¡ç†å‘˜æƒé™ / ä¸ä¿®æ”¹ç³»ç»Ÿç¯å¢ƒå˜é‡ / ä¸è‡ªåŠ¨å®‰è£…ä¾èµ– /
-rem        ä¸ä¿®æ”¹ä»»ä½•é¡¹ç›®æ–‡ä»¶ / å‡ºé”™æ—¶çª—å£ä¿æŒæ‰“å¼€ä»¥ä¾¿æŸ¥çœ‹é”™è¯¯ã€‚
-rem ============================================================
-chcp 65001 >nul
 setlocal
-title BlindRoadMonitor - Web æœåŠ¡
 
 set "PROJECT_DIR=D:\BlindRoadMonitor"
 set "VENV_PY=D:\BlindRoadMonitor.venv\Scripts\python.exe"
 set "PORT=8000"
 
-cd /d "%PROJECT_DIR%"
+cd /d "%PROJECT_DIR%" || (echo ÎŞ·¨½øÈëÏîÄ¿Ä¿Â¼: %PROJECT_DIR% & pause & exit /b 1)
 
 echo ============================================================
-echo   æ™ºèƒ½ç›²é“éšœç¢ç‰©ç›‘æµ‹ä¸é¢„è­¦ç³»ç»Ÿ
-echo   BlindRoadMonitor - Web UI
+echo   BlindRoadMonitor - ÖÇÄÜÃ¤µÀÕÏ°­Îï¼à²âÓëÔ¤¾¯ÏµÍ³
 echo ============================================================
 echo.
 
-rem ---- 1) æ£€æŸ¥è™šæ‹Ÿç¯å¢ƒ ----
 if not exist "%VENV_PY%" (
-  echo [é”™è¯¯] æ‰¾ä¸åˆ°è™šæ‹Ÿç¯å¢ƒ Pythonï¼š
-  echo        %VENV_PY%
-  echo.
-  echo        è§£å†³åŠæ³•ï¼šå‚è€ƒ docs\deployment_guide.md çš„â€œå®‰è£…â€ç« èŠ‚é‡å»ºè™šæ‹Ÿç¯å¢ƒï¼Œ
-  echo        æˆ–ç¡®è®¤ D:\BlindRoadMonitor.venv æ˜¯å¦è¢«ç§»åŠ¨/åˆ é™¤ã€‚
+  echo [´íÎó] ÕÒ²»µ½ĞéÄâ»·¾³ Python: %VENV_PY%
+  echo         Çë²Î¿¼ docs\deployment_guide.md µÄ"°²×°"ÕÂ½ÚÖØ½¨ĞéÄâ»·¾³¡£
   echo.
   pause
   exit /b 1
 )
 
-rem ---- 2) æ£€æŸ¥å¯åŠ¨è„šæœ¬ ----
 if not exist "%PROJECT_DIR%\scripts\run_web.py" (
-  echo [é”™è¯¯] æ‰¾ä¸åˆ°å¯åŠ¨è„šæœ¬ï¼š%PROJECT_DIR%\scripts\run_web.py
-  echo        è¯·ç¡®è®¤é¡¹ç›®æ–‡ä»¶å®Œæ•´ã€‚
+  echo [´íÎó] ÕÒ²»µ½Æô¶¯½Å±¾: %PROJECT_DIR%\scripts\run_web.py
+  echo         ÇëÈ·ÈÏÏîÄ¿ÎÄ¼şÍêÕû¡£
   echo.
   pause
   exit /b 1
 )
 
-echo [1/2] ç¯å¢ƒæ£€æŸ¥é€šè¿‡ï¼š
-echo       é¡¹ç›®ç›®å½• = %PROJECT_DIR%
-echo       è§£é‡Šå™¨   = %VENV_PY%
+echo [1/2] »·¾³¼ì²éÍ¨¹ı
+echo        ÏîÄ¿Ä¿Â¼ = %PROJECT_DIR%
+echo        ½âÊÍÆ÷   = %VENV_PY%
 echo.
-
-echo [2/2] æ­£åœ¨å¯åŠ¨ Web æœåŠ¡ï¼ˆé¦–æ¬¡åŠ è½½æ¨¡å‹çº¦éœ€ 10~30 ç§’ï¼‰...
-echo       æµè§ˆå™¨è®¿é—®ï¼š http://127.0.0.1:%PORT%
-echo       åœæ­¢æœåŠ¡ï¼š   åœ¨æœ¬çª—å£æŒ‰ Ctrl+Cï¼Œæˆ–ç›´æ¥å…³é—­æœ¬çª—å£
+echo [2/2] ÕıÔÚÆô¶¯ Web ·şÎñ (Ê×´Î¼ÓÔØÄ£ĞÍÔ¼Ğè 10~30 Ãë)...
+echo        ä¯ÀÀÆ÷·ÃÎÊ: http://127.0.0.1:%PORT%
+echo        Í£Ö¹·şÎñ:   ÔÚ±¾´°¿Ú°´ Ctrl+C£¬»òÖ±½Ó¹Ø±Õ±¾´°¿Ú
 echo.
 echo ------------------------------------------------------------
 
@@ -60,16 +44,16 @@ set "EXITCODE=%ERRORLEVEL%"
 echo ------------------------------------------------------------
 echo.
 if not "%EXITCODE%"=="0" (
-  echo [é”™è¯¯] æœåŠ¡å¼‚å¸¸é€€å‡ºï¼Œé€€å‡ºç  %EXITCODE%
+  echo [´íÎó] ·şÎñÒì³£ÍË³ö£¬ÍË³öÂë %EXITCODE%
   echo.
-  echo   å¸¸è§åŸå› ï¼š
-  echo     1. æ‘„åƒå¤´è¢«å…¶ä»–ç¨‹åºå ç”¨ï¼ˆå¦‚ç›¸æœºåº”ç”¨ã€ä¼šè®®è½¯ä»¶ï¼‰â†’ å…³æ‰å®ƒä»¬åé‡è¯•
-  echo     2. æ˜¾å¡é©±åŠ¨ / CUDA å¼‚å¸¸ â†’ æŸ¥çœ‹ä¸Šæ–¹é”™è¯¯ï¼Œå‚è€ƒ deployment_guide.md
-  echo     3. ç«¯å£ %PORT% è¢«å ç”¨ â†’ ç”¨å…¶ä»–ç«¯å£ï¼šscripts\run_web.py --port 8010
+  echo   ³£¼ûÔ­Òò:
+  echo     1. ÉãÏñÍ·±»ÆäËû³ÌĞòÕ¼ÓÃ (ÈçÏà»úÓ¦ÓÃ¡¢»áÒéÈí¼ş) -> ¹ØµôºóÖØÊÔ
+  echo     2. ÏÔ¿¨Çı¶¯ / CUDA Òì³£ -> ²é¿´ÉÏ·½´íÎó£¬²Î¿¼ docs\deployment_guide.md
+  echo     3. ¶Ë¿Ú %PORT% ±»Õ¼ÓÃ -> »»¶Ë¿Ú: scripts\run_web.py --port 8010
   echo.
-  echo   è¯¦ç»†æ’éšœè§ï¼šdocs\deployment_guide.md  â€œå¸¸è§é”™è¯¯â€ä¸€èŠ‚
+  echo   ÏêÏ¸ÅÅÕÏ¼û docs\deployment_guide.md ³£¼û´íÎó Ò»½Ú
 ) else (
-  echo æœåŠ¡å·²æ­£å¸¸åœæ­¢ã€‚
+  echo ·şÎñÒÑÕı³£Í£Ö¹¡£
 )
 echo.
 pause
