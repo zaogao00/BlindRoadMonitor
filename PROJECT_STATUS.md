@@ -4,7 +4,7 @@
 
 ### 当前状态 (Current Status)
 - **阶段**: Phase 00 / 02–09 已完成 ✅；**Phase 10 数据集分析 已完成 ✅**；**Phase 11 YOLO 数据集转换 已完成 ✅** (17,908 图 / 195,719 实例 / 26 类)；**Phase 12 可视化质量检查 已完成 ✅** (120 张全部正常)；**Phase 13 小规模训练验证 已完成 ✅** (YOLOv8n, 450 图 / 10 epochs / mAP50 0.301 复评)；**Phase 14 训练结果分析 已完成 ✅** — 盲道类 mAP50 **0.662** (10 epochs), 四项判断正常；**Phase 15 全量正式训练 已完成 ✅** (YOLOv8n, 17,908 图 / 200 epochs / **test mAP50 0.776** / **盲道类 mAP50 0.849** ✅ 达成 ≥0.75)；**Phase 16 推理验证 已完成 ✅** (best.pt 复现 test mAP50 0.776 / 盲道 mAP50 0.849 / GPU 88 FPS / 显存 4.07 GB；判定 **GO** 进入 Phase 17)；**Phase 17 实时摄像头检测 已完成 ✅** (headless 验证: best.pt 加载/摄像头打开/连续读帧/实时推理+绘制/模型推理 78.6 FPS/GPU 无错无 OOM；链路 PASS, 可见窗口与物理摄像头实景待用户本地确认)；**Phase 18 部署/推理性能优化 已完成 ✅** (PyTorch FP32 9.5ms→105FPS / FP16 10.1ms→98.6FPS, 真实GPU占用216MiB; FP32=FP16检测一致; 盲道图像级召回0.878 PASS; 端到端27–28FPS(瓶颈在摄像头读帧); 判定 GO, 无需 ONNX/TensorRT)；**Phase 19 Web UI + 障碍物实时提醒 已完成 ✅** (FastAPI+uvicorn+pyttsx3; 单 camera worker 线程 + MJPEG /video_feed + /api/status; 视觉警告横幅 + TTS 语音提醒(冷却 2.5s / 多障碍物去重合并); 盲道 Detected/Not Detected; 默认 conf=0.20; 障碍物检测/视觉提醒/TTS/冷却/多障碍物去重/连续运行 全 PASS; 判定 GO; 空间关系判断留 Phase 20)；**Phase 20 空间关系判断与分级预警 已完成 ✅** (`backend/spatial.py` SpatialChecker: IoU+中心点+交叠比三条件规则, 阈值经 3×3 扫描选定 IoU≥0.10/交叠≥0.20; 三级告警 NONE/NORMAL/BLOCKING_SUSPECTED; normal/blocking 双冷却实现 Level1→Level2 立即升级; TTS 复用 Phase 19 异步线程+队列; 视频叠加"占用盲道?"红框标注; /api/status 增 occupancy/alert_level/blocking; 单元测试 10/10 PASS (0.075ms/帧); 真实图片盲道组 Level2=44.6%/对照组误报仅 0.5%/GT-预测占用一致性 83.2% (不一致均归因检测层误差); 连续 5 分钟 61.4 FPS 无异常; 判定 **GO**; 注意: 输出为"疑似占用"判断, 非 segmentation/绝对阻挡; 数据集 blind_road GT 仅约 7% 图像含标注); **Phase 21 最终打包与部署 已完成 ✅ (COMPLETE / CONDITIONAL GO)** — venv+start_web.bat 部署方式, 新增 /api/health 探针, 部署测试 23 项(22 PASS/1 CONDITIONAL), 不做 EXE; 真实扬声器/可见窗口/物理摄像头实景待用户 Windows 11 实机确认
-- **整体状态**: 数据与训练管线验证通过, 磁盘状态 **NORMAL**, 可进入全量正式训练 (Phase 15 候选)。
+- **整体状态**: 数据与训练管线验证通过, **Phase 00–21 全部完成 ✅**, 磁盘状态 **NORMAL**, 可进入本机实机确认 (真实扬声器 / 可见窗口 / 物理摄像头实景) 与日常使用。
 - **硬件**: NVIDIA RTX 5070 (8GB VRAM)
 - **项目根目录**: `D:\BlindRoadMonitor`
 
@@ -15,8 +15,8 @@
 | ------------ | --------------------- | ------ |
 | 监控盘符     | D:\                   | —      |
 | 总空间       | ~200 GB (沙箱视图)    | —      |
-| 已使用       | ~135.7 GB (67.9%)     | —      |
-| 剩余空间     | **~64.3 GB** (Phase 13 后) | NORMAL (≥ 30 GB) |
+| 已使用       | ~126.9 GB (63.4%)     | —      |
+| 剩余空间     | **~73.1 GB** (Phase 21 后实时读数) | NORMAL (≥ 30 GB) |
 | 项目目录占用 | ~8.9 GB (raw 4.41 + processed 4.37 + runs 权重 ~50 MB + smoke 126 MB + **prod_b32 ~150 MB**) | 已计入已使用 |
 | venv 占用    | ~4.7 GB (PyTorch GPU + Ultralytics) | 已计入已使用 |
 | ROD 数据集   | 225.7 MB (raw; 4,000 图 + 4,000 标签) | 已计入已使用 |

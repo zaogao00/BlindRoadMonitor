@@ -21,7 +21,7 @@
 - 沙箱逻辑层: `tests/test_spatial.py` 10/10; A~G 模拟 ALL PASS (含 180s 稳定 / voice 持久复用 / 线程无泄漏)
 
 ### Git
-- 仅本地 commit, 未 push (按用户约定, push 前再确认)
+- 已 commit 并 push 至 origin/master（实测本地 HEAD 与远程 master 完全一致, 0 ahead / 0 behind）。
 
 ## [Phase 21] — 2026-09-05 (最终打包与部署 COMPLETE / CONDITIONAL GO — 不做 EXE)
 
