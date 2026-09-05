@@ -23,6 +23,11 @@ import time
 import threading
 import queue
 
+# 进程级串行锁: SAPI 默认语音是进程级单例, 多个 engine / 多线程并发调用
+# runAndWait() 会抛 "run loop already started"。此锁保证任意时刻只有一个
+# runAndWait 在执行, 彻底规避该异常 (同时兼容多 AlertManager 实例的测试场景)。
+_TTS_ENGINE_LOCK = threading.Lock()
+
 # ---- 障碍物类别定义 (由 datasets/processed/data.yaml 的 26 类派生) ----
 # 排除"非实体路面/信号"类: blind_road(0) 核心目标, crosswalk(7) 地面标线,
 # green_light(9) / red_light(10) 信号灯。其余均为可能对盲道通行构成实体阻挡的
@@ -88,7 +93,8 @@ class AlertManager:
         # 使 Level 2 高级告警不被 Level 1 普通告警的冷却阻塞, 规格 §十六)
         self._last_tts_normal = 0.0
         self._last_tts_blocking = 0.0
-        self.speech_log = []         # 最近播报文本 (用于验证/调试, 最多 20 条)
+        self.speech_log = []         # TTS 事件日志: {"ts","text","status","err"} status∈queued/started/finished/error, 最多 20 条
+        self.speech_count = 0        # 已提交给 TTS 的播报次数 (与 queued 事件数一致)
 
         self._init_tts()
 
@@ -111,34 +117,63 @@ class AlertManager:
             self.tts_error = f"{type(e).__name__}: {str(e)[:120]}"
 
     def _tts_loop(self):
+        """TTS worker: 每条播报都用全新 engine (同一 worker 线程内 init+say+runAndWait),
+        规避 Windows SAPI "第一次能播、后续静默" 的 COM 状态污染问题。
+
+        设计要点 (对应规格 §5/§6):
+          - pyttsx3.init() 始终在 worker 线程内执行 (与 say/runAndWait 同线程, 不跨线程);
+          - 每条消息独立 engine, 顺序执行, 不创建并发 SAPI engine;
+          - 异常被记录 (类型/信息/文本) 并恢复, 绝不静默吞掉 (原 except:pass 正是根因之一);
+          - 异常不会杀死本线程, 也不会阻塞 YOLO 主循环 / Web 服务;
+          - 每条消息处理完 (无论成败) 都调用 task_done, worker 持续存活。
+        """
         import pyttsx3
-        engine = None
-        try:
-            # 在 worker 线程内初始化引擎, 避免跨线程 COM 单元不匹配导致无声
-            engine = pyttsx3.init()
-            try:
-                engine.setProperty('rate', TTS_RATE)
-            except Exception:
-                pass
-            with self._lock:
-                self._tts_engine = engine
-                self.tts_available = True
-        except Exception as e:
-            with self._lock:
-                self.tts_available = False
-                self.tts_error = f"{type(e).__name__}: {str(e)[:120]}"
         while True:
             text = self._tts_queue.get()
             if text is None:
                 self._tts_queue.task_done()
+                print("[TTS] worker 收到退出哨兵, 线程结束")
                 break
-            eng = self._tts_engine
+            print(f"[TTS] worker 收到消息: {text!r}")
+            eng = None
             try:
-                if eng is not None:
+                # 每次播报都用独立 engine (同线程) -> 避免 SAPI 跨调用状态污染
+                eng = pyttsx3.init()
+                try:
+                    eng.setProperty('rate', TTS_RATE)
+                except Exception:
+                    pass
+                with self._lock:
+                    self._tts_engine = eng
+                    self.tts_available = True
+                self._mark_speech(text, "started")
+                print(f"[TTS] engine.say -> {text!r}")
+                with _TTS_ENGINE_LOCK:
                     eng.say(text)
+                    print("[TTS] engine.runAndWait() begin")
                     eng.runAndWait()
-            except Exception:
-                pass  # TTS 失败不影响主系统
+                print("[TTS] engine.runAndWait() end (完成)")
+                with self._lock:
+                    self.tts_available = True
+                    self.tts_error = ""
+                self._mark_speech(text, "finished")
+            except Exception as e:
+                err = f"{type(e).__name__}: {str(e)[:160]}"
+                print(f"[TTS] 异常: type={type(e).__name__} msg={err} text={text!r}")
+                with self._lock:
+                    self.tts_available = False
+                    self.tts_error = err
+                self._mark_speech(text, "error", err)
+            finally:
+                # 释放本次 engine, 避免累积 COM 对象 (单线程顺序执行, 无并发)
+                try:
+                    if eng is not None:
+                        eng.stop()
+                except Exception:
+                    pass
+                eng = None
+                with self._lock:
+                    self._tts_engine = None
             self._tts_queue.task_done()
 
     # ---- 每帧更新 ----
@@ -234,16 +269,38 @@ class AlertManager:
             return f"检测到{'、'.join(uniq)}，请注意。"
         return "检测到多个障碍物，请注意。"
 
-    def _speak(self, text):
+    def _mark_speech(self, text, status, err=""):
         with self._lock:
-            self.speech_log.append(text)
+            self.speech_log.append({
+                "ts": round(time.time(), 3),
+                "text": text,
+                "status": status,
+                "err": err,
+            })
             if len(self.speech_log) > 20:
                 self.speech_log.pop(0)
-        if self._tts_started:
+
+    def _speak(self, text):
+        # 诊断: 记录入队信息 (时间 / text / _tts_started / 队列长度 / 累计次数)
+        with self._lock:
+            self.speech_count += 1
+            self.speech_log.append({
+                "ts": round(time.time(), 3),
+                "text": text,
+                "status": "queued",
+                "err": "",
+            })
+            if len(self.speech_log) > 20:
+                self.speech_log.pop(0)
+            started = self._tts_started
+            qsize = self._tts_queue.qsize()
+            cnt = self.speech_count
+        print(f"[TTS] enqueue: {text!r} | started={started} | queue={qsize} | count={cnt}")
+        if started:
             try:
                 self._tts_queue.put(text)
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"[TTS] 入队失败: {type(e).__name__}: {str(e)[:120]}")
 
     def get_status(self):
         with self._lock:
@@ -259,7 +316,9 @@ class AlertManager:
                 'blind_road_count': self.blind_road_count,
                 'tts_available': self.tts_available,
                 'tts_error': self.tts_error,
-                'speech_count': len(self.speech_log),
+                'tts_thread_alive': (self._tts_thread.is_alive() if self._tts_thread else False),
+                'speech_count': self.speech_count,
+                'speech_log': list(self.speech_log),
             }
 
     def get_speech_log(self):
