@@ -2,6 +2,20 @@
 
 本项目所有重要变更记录于此。格式参考 Keep a Changelog。
 
+## [Feat] 网络视频流源支持 (手机摄像头接入) — 2026-09-06
+
+### Added (新增)
+- **`backend/web.py` `_resolve_source()`**: 新增 `http://` / `https://` / `rtsp://` / `rtmp://` URL 分支 → `cv2.VideoCapture(url)` 经 FFMPEG 拉流 (kind='stream'); 分辨率回读与 `release()` 对 stream 兼容
+- **`README.md`**: `--source` 参数说明补充网络视频流用法
+
+### Verified (实测 — 用户手机 IP Webcam)
+- `http://192.168.1.7:8080/video` (MJPEG, 1080p): TCP 可达 / `cv2.VideoCapture` isOpened=True / 读到帧 1920×1080
+- 端到端: model=True + camera=True + **fps_stream 27–34** / fps_model 77.8; 检测与分级预警正常; MJPEG `/video_feed` 输出 `--frame` 边界正常
+- 连续采样 20s 稳定, 无断流无 CUDA error
+
+### Git
+- 提交: `feat: support network video stream source (phone camera via IP Webcam / RTSP)`
+
 ## [Fix] TTS 后续播报无声 — 2026-09-05 (绕过 pyttsx3, 改用原生 SAPI 同步播放)
 
 ### Changed (修改)

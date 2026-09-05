@@ -79,7 +79,7 @@ app = FastAPI(title="BlindRoadMonitor Web UI")
 # camera worker
 # ----------------------------------------------------------------------------
 def _resolve_source(src):
-    """返回 (kind, cap_or_image)。kind in {'image','video','camera'}。"""
+    """返回 (kind, cap_or_image)。kind in {'image','video','camera','stream'}。"""
     if isinstance(src, str):
         low = src.lower()
         if low.endswith((".jpg", ".jpeg", ".png", ".bmp", ".webp")):
@@ -87,6 +87,12 @@ def _resolve_source(src):
             if img is None:
                 raise RuntimeError(f"无法读取图片源: {src}")
             return "image", img
+        if low.startswith(("http://", "https://", "rtsp://", "rtmp://")):
+            # 网络视频流 (手机 IP Webcam / RTSP 摄像头 / HTTP-MJPEG): OpenCV 经 FFMPEG 拉流
+            cap = cv2.VideoCapture(src)
+            if not cap.isOpened():
+                raise RuntimeError(f"无法打开网络视频流: {src} (检查地址/同一局域网/防火墙)")
+            return "stream", cap
         if low.endswith((".mp4", ".avi", ".mov", ".mkv", ".wmv")):
             cap = cv2.VideoCapture(src)
             if not cap.isOpened():
@@ -126,7 +132,7 @@ def camera_worker():
         kind, src = _resolve_source(CONFIG["source"])
         state["camera"] = True
         # Phase 21: 回读摄像头实际协商结果 (分辨率/FPS 只记录, 不强制)
-        if kind == "camera" and src is not None:
+        if kind in ("camera", "stream") and src is not None:
             try:
                 w = int(src.get(cv2.CAP_PROP_FRAME_WIDTH))
                 h = int(src.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -192,7 +198,7 @@ def camera_worker():
         print(f"[web][worker] 运行异常: {type(e).__name__}: {e}")
         state["camera_error"] = f"{type(e).__name__}: {str(e)[:200]}"
     finally:
-        if kind in ("video", "camera") and src is not None:
+        if kind in ("video", "camera", "stream") and src is not None:
             try:
                 src.release()
             except Exception:
