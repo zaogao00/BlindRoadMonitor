@@ -68,6 +68,7 @@ class AlertManager:
         self._tts_engine = None
         self._tts_queue = queue.Queue()
         self._tts_thread = None
+        self._tts_started = False
 
         # 当前状态 (每帧更新)
         self.blind_road = False
@@ -93,32 +94,49 @@ class AlertManager:
 
     # ---- TTS 初始化 (优雅降级) ----
     def _init_tts(self):
+        # 关键: 不在主线程创建 pyttsx3 引擎。Windows SAPI 是 COM 对象, 绑定在创建它的
+        # 线程单元 (apartment) 中; 若在主线程 init() 而在 worker 线程 runAndWait(), 会跨
+        # 线程单元不匹配而静默失败 (现象: tts_available=True 但完全无声)。
+        # 因此引擎延迟到 _tts_loop worker 线程内部创建, 保证 say/runAndWait 与引擎同线程。
         try:
-            import pyttsx3
-            self._tts_engine = pyttsx3.init()
-            try:
-                self._tts_engine.setProperty('rate', TTS_RATE)
-            except Exception:
-                pass
-            self.tts_available = True
             self._tts_thread = threading.Thread(target=self._tts_loop, daemon=True)
             self._tts_thread.start()
+            self._tts_started = True
+            self.tts_available = True  # 子系统已启动; 引擎就绪情况由 worker 线程回报
         except Exception as e:
-            # 无音频设备 / 驱动异常 / 沙箱环境 -> 保留视觉提醒, 不抛错
+            # 线程无法启动等极端情况 -> 保留视觉提醒, 不抛错
             self.tts_available = False
             self._tts_engine = None
+            self._tts_started = False
             self.tts_error = f"{type(e).__name__}: {str(e)[:120]}"
 
     def _tts_loop(self):
+        import pyttsx3
+        engine = None
+        try:
+            # 在 worker 线程内初始化引擎, 避免跨线程 COM 单元不匹配导致无声
+            engine = pyttsx3.init()
+            try:
+                engine.setProperty('rate', TTS_RATE)
+            except Exception:
+                pass
+            with self._lock:
+                self._tts_engine = engine
+                self.tts_available = True
+        except Exception as e:
+            with self._lock:
+                self.tts_available = False
+                self.tts_error = f"{type(e).__name__}: {str(e)[:120]}"
         while True:
             text = self._tts_queue.get()
             if text is None:
                 self._tts_queue.task_done()
                 break
+            eng = self._tts_engine
             try:
-                if self._tts_engine is not None:
-                    self._tts_engine.say(text)
-                    self._tts_engine.runAndWait()
+                if eng is not None:
+                    eng.say(text)
+                    eng.runAndWait()
             except Exception:
                 pass  # TTS 失败不影响主系统
             self._tts_queue.task_done()
@@ -221,7 +239,7 @@ class AlertManager:
             self.speech_log.append(text)
             if len(self.speech_log) > 20:
                 self.speech_log.pop(0)
-        if self.tts_available and self._tts_engine is not None:
+        if self._tts_started:
             try:
                 self._tts_queue.put(text)
             except Exception:
