@@ -53,13 +53,19 @@ D:\BlindRoadMonitor.venv\Scripts\python.exe -m pip install -r requirements.txt
 
 ## 4. 启动
 
-**最简单方式（推荐）**：双击
+**方式 A — 电脑摄像头（推荐）**：双击
 
 ```text
 D:\BlindRoadMonitor\scripts\start_web.bat
 ```
 
-该脚本会自动进入项目目录、使用项目虚拟环境启动服务；出错时窗口保持打开，方便查看中文错误信息。
+**方式 B — 手机摄像头（IP Webcam）**：手机开 IP Webcam 并点"启动服务器"（与电脑同一 WiFi），然后双击
+
+```text
+D:\BlindRoadMonitor\scripts\start_web_phone.bat
+```
+
+该脚本会自动连接手机流、启动服务，约 12 秒后自动打开浏览器直达画面；若手机 IP 变化，用记事本改脚本顶部的 `SOURCE` 一行即可。两个脚本出错时窗口都会保持打开，方便查看中文错误信息。
 
 **命令行方式**：
 

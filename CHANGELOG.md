@@ -2,6 +2,18 @@
 
 本项目所有重要变更记录于此。格式参考 Keep a Changelog。
 
+## [Feat] 手机摄像头一键启动脚本 — 2026-09-06
+
+### Added (新增)
+- **`scripts/start_web_phone.bat`** (GBK+CRLF): 双击即连手机摄像头 (IP Webcam) 启动盲道程序 — 自动连接 `SOURCE` 手机流、约 12s 后自动打开浏览器直达画面; 顶部 `SOURCE` / `PORT` 可改 (手机 IP 变化时只需改一行); 含环境检查/错误提示/常见原因 (手机未启动/不在同一 WiFi/IP 变化/端口占用)
+
+### Verified (实测)
+- cmd (代码页 936/GBK) 执行: 中文正常、环境检查通过、SOURCE 正确传入
+- 服务运行: camera=True / model=True / fps 30.6 / 1920×1080 (手机流实况) ✅
+
+### Git
+- 提交: `feat: one-click start script for phone camera (start_web_phone.bat)`
+
 ## [Feat] 网络流断流自动重连 — 2026-09-06
 
 ### Added (新增)
