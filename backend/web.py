@@ -38,6 +38,9 @@ CONFIG = {
     "height": 480,
 }
 
+# 网络流 (URL/RTSP) 断流自动重连间隔 (秒); 仅 kind=='stream' 生效, 本机摄像头不重连
+RECONNECT_DELAY = 3.0
+
 # 全局运行状态
 state = {
     "camera": False,
@@ -166,6 +169,43 @@ def camera_worker():
                     # 视频循环回放, 便于无摄像头时验证
                     src.set(cv2.CAP_PROP_POS_FRAMES, 0)
                     continue
+                if kind == "stream":
+                    # 网络流 (手机 IP Webcam / RTSP): 断流自动重连, 直到成功或进程停止
+                    print("[web][worker] 网络流断开, 开始自动重连 "
+                          f"(每 {RECONNECT_DELAY:.0f}s 重试, source={CONFIG['source']})")
+                    state["camera"] = False
+                    state["camera_error"] = "网络流断开, 自动重连中..."
+                    reconnected = False
+                    while running.is_set() and not reconnected:
+                        time.sleep(RECONNECT_DELAY)
+                        try:
+                            new_src = cv2.VideoCapture(CONFIG["source"])
+                            if new_src.isOpened():
+                                # 换新连接: 释放旧句柄, 用新句柄继续主循环
+                                try:
+                                    src.release()
+                                except Exception:
+                                    pass
+                                src = new_src
+                                state["camera"] = True
+                                state["camera_error"] = ""
+                                # 回读新连接协商分辨率
+                                try:
+                                    w = int(src.get(cv2.CAP_PROP_FRAME_WIDTH))
+                                    h = int(src.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                                    state["resolution"] = f"{w}x{h}"
+                                except Exception:
+                                    pass
+                                reconnected = True
+                                print("[web][worker] 网络流重连成功")
+                            else:
+                                new_src.release()
+                        except Exception as e:
+                            print(f"[web][worker] 网络流重连异常: {type(e).__name__}: {e}")
+                    if reconnected:
+                        continue
+                    # running 已停止
+                    break
                 print("[web][worker] 帧读取失败 (源断开), 退出 worker")
                 state["camera"] = False
                 state["camera_error"] = "帧读取失败 (源断开)"

@@ -2,6 +2,19 @@
 
 本项目所有重要变更记录于此。格式参考 Keep a Changelog。
 
+## [Feat] 网络流断流自动重连 — 2026-09-06
+
+### Added (新增)
+- **`backend/web.py`**: kind=='stream' (URL/RTSP) 读帧失败时自动重连 — 每 `RECONNECT_DELAY=3s` 重试 `cv2.VideoCapture(source)`, 期间 `/api/status` 报 `camera_error="网络流断开, 自动重连中..."`, 成功后清除错误并回读分辨率; worker 保持存活, 无需重启程序
+- 本机摄像头 (idx) / 图片 / 视频路径行为不变 (仅 stream 走重连)
+
+### Verified (实测 — 本地模拟 MJPEG 源断流→恢复)
+- 稳定运行 (camera=True, fps 9.9) → 杀源进程 → `camera=False + cam_err=自动重连中` (worker 未退出) → 重启源 → 10s 内 `camera=True + fps 恢复 + 错误清空` ✅
+- 端口冲突排查: 两个源进程抢同端口会导致流异常 (已避免, 无代码问题)
+
+### Git
+- 提交: `feat: auto-reconnect for network stream source`
+
 ## [Feat] 网络视频流源支持 (手机摄像头接入) — 2026-09-06
 
 ### Added (新增)
